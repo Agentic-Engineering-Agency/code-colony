@@ -18,26 +18,33 @@ function projectEvent(event: RuntimeEvent): RuntimeWorkerEvent {
 function projectArtifact(bundle: ArtifactBundle): RuntimeWorkerArtifact {
   return { title: bundle.title, changedFiles: bundle.changedFiles, diff: bundle.diff, testResult: bundle.testResult, reviewerVerdicts: bundle.reviewerVerdicts, status: bundle.status };
 }
+export const DEFAULT_RUNTIME_PREVIEW_REQUEST: RuntimeWorkerRequest = { jobId: "job-spec-preview", agentEmployeeId: "operator", specId: "spec-preview" };
+
+export const SIMULATED_RUNTIME_DESCRIPTION = "Simulated Oh My Pi runtime worker that replays seeded events; never mutates a real repository.";
+
+export function runSimulatedRuntimePreview(data: DemoData, request: RuntimeWorkerRequest): RuntimeWorkerResult {
+  const run = data.runs.find((candidate) => candidate.jobId === request.jobId && candidate.agentEmployeeId === request.agentEmployeeId);
+  if (!run) {
+    return {
+      adapter: "oh_my_pi",
+      status: "queued",
+      events: [{ type: "run.started", role: "system", content: `No seeded run for job ${request.jobId}; producing synthetic queued state.`, timestamp: "00:00" }],
+      artifact: null,
+    };
+  }
+  const events = data.events.filter((event) => event.runId === run.id).map(projectEvent);
+  const seededArtifact = data.artifacts.find((bundle) => bundle.runId === run.id);
+  return { adapter: "oh_my_pi", status: run.status, events, artifact: seededArtifact ? projectArtifact(seededArtifact) : null };
+}
 
 export function createSimulatedRuntimeWorker(data: DemoData): RuntimeWorker {
   return {
     adapter: "oh_my_pi",
     describe() {
-      return "Simulated Oh My Pi runtime worker that replays seeded events; never mutates a real repository.";
+      return SIMULATED_RUNTIME_DESCRIPTION;
     },
     async execute(request) {
-      const run = data.runs.find((candidate) => candidate.jobId === request.jobId && candidate.agentEmployeeId === request.agentEmployeeId);
-      if (!run) {
-        return {
-          adapter: "oh_my_pi",
-          status: "queued",
-          events: [{ type: "run.started", role: "system", content: `No seeded run for job ${request.jobId}; producing synthetic queued state.`, timestamp: "00:00" }],
-          artifact: null,
-        };
-      }
-      const events = data.events.filter((event) => event.runId === run.id).map(projectEvent);
-      const seededArtifact = data.artifacts.find((bundle) => bundle.runId === run.id);
-      return { adapter: "oh_my_pi", status: run.status, events, artifact: seededArtifact ? projectArtifact(seededArtifact) : null };
+      return runSimulatedRuntimePreview(data, request);
     },
   };
 }

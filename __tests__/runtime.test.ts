@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { demoData } from "../src/domain/demoData";
-import { appendRuntimeWorkerResult, createSimulatedRuntimeWorker } from "../src/domain/runtime";
+import { DEFAULT_RUNTIME_PREVIEW_REQUEST, appendRuntimeWorkerResult, createSimulatedRuntimeWorker, runSimulatedRuntimePreview } from "../src/domain/runtime";
 
 describe("Simulated runtime worker", () => {
   it("replays seeded events for a known job", async () => {
@@ -35,5 +35,15 @@ describe("Simulated runtime worker", () => {
     expect(next.events.length).toBe(before + result.events.length);
     expect(next.runs.find((run) => run.id === "run-preview")?.status).toBe("review");
     expect(next.events.at(-1)?.runId).toBe("run-preview");
+  });
+
+  it("runSimulatedRuntimePreview returns the same shape the UI consumes for the default request", () => {
+    const preview = runSimulatedRuntimePreview(demoData, DEFAULT_RUNTIME_PREVIEW_REQUEST);
+
+    expect(preview.adapter).toBe("oh_my_pi");
+    expect(preview.status).toBe("review");
+    expect(preview.events.length).toBeGreaterThan(0);
+    expect(preview.events.every((event) => typeof event.timestamp === "string")).toBe(true);
+    expect(preview.artifact?.diff).toContain("+ export type RuntimeEvent");
   });
 });
