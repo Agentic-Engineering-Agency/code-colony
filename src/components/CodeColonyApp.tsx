@@ -34,8 +34,9 @@ export function CodeColonyApp() {
             const payload = await response.json() as { cwd: string | null; scan: RepositoryWorldScan };
             setData((current) => applyRefreshedRepoScan(current, payload.scan));
           }} />}
-          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} onRefreshBacklog={async () => {
-            const response = await fetch("/api/backlog/refresh");
+          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} onRefreshBacklog={async (source) => {
+            const url = source ? `/api/backlog/refresh?source=${source}` : "/api/backlog/refresh";
+            const response = await fetch(url);
             if (!response.ok) throw new Error(`refresh failed: ${response.status}`);
             const payload = await response.json() as { backlog: import("@/domain/types").BacklogIssue[]; report: { githubAdded: number; linearAdded: number; errors: string[] } };
             setData((current) => applyRefreshedBacklog(current, payload.backlog));
@@ -124,7 +125,7 @@ function RepoScanRefreshButton({ onRefresh }: { onRefresh: () => Promise<void> }
   </div>;
 }
 
-function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog, onRefreshBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void; onRefreshBacklog: () => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
+function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog, onRefreshBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void; onRefreshBacklog: (source?: "github" | "linear" | "all") => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
   const lanes: GovernanceState[] = ["proposed", "approved", "running", "review", "learned"];
   return <section className="screen">
     <div className="queue-grid">{lanes.map((lane) => <div className="queue" key={lane}><div className="queue-title"><span>{lane}</span><span>{data.jobs.filter((job) => job.state === lane).length}</span></div>{data.jobs.filter((job) => job.state === lane).map((job) => <div className="mini-card" key={job.id}><h4>{job.title}</h4><p>{agentName(data, job.agentEmployeeId)} · {job.risk} risk · {job.estimate}</p><div className="action-row" style={{ marginTop: 8 }}><button className="btn primary" onClick={() => onMove(job.id, nextLane(lane))}>Move</button></div></div>)}</div>)}</div>
@@ -132,17 +133,17 @@ function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog, onRe
   </section>;
 }
 
-function BacklogPanel({ data, onIngest, onReject, onRefresh }: { data: DemoData; onIngest: (issueId: string) => void; onReject: (issueId: string) => void; onRefresh: () => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
+function BacklogPanel({ data, onIngest, onReject, onRefresh }: { data: DemoData; onIngest: (issueId: string) => void; onReject: (issueId: string) => void; onRefresh: (source?: "github" | "linear" | "all") => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
   const newIssues = data.backlog.filter((issue) => issue.status === "new");
   const handled = data.backlog.filter((issue) => issue.status !== "new");
   const [phase, setPhase] = useState<"idle" | "loading">("idle");
   const [report, setReport] = useState<{ githubAdded: number; linearAdded: number; errors: string[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const handleRefresh = async () => {
+  const handleRefresh = async (source?: "github" | "linear" | "all") => {
     setPhase("loading");
     setError(null);
     try {
-      const result = await onRefresh();
+      const result = await onRefresh(source);
       setReport(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -153,7 +154,10 @@ function BacklogPanel({ data, onIngest, onReject, onRefresh }: { data: DemoData;
   return <aside className="panel" style={{ marginTop: 16 }}>
     <div className="panel-head"><span className="ttl">Backlog Ingest</span><span className="sub">{newIssues.length} pending</span></div>
     <div className="panel-body">
-      <div className="action-row" style={{ marginBottom: 12 }}><button className="btn primary" disabled={phase === "loading"} onClick={() => { void handleRefresh(); }}>{phase === "loading" ? "Refreshing…" : "Refresh from importers"}</button>
+      <div className="action-row" style={{ marginBottom: 12, flexWrap: "wrap" }}>
+        <button className="btn primary" disabled={phase === "loading"} onClick={() => { void handleRefresh("all"); }}>{phase === "loading" ? "Refreshing…" : "Refresh all"}</button>
+        <button className="btn" disabled={phase === "loading"} onClick={() => { void handleRefresh("github"); }}>GitHub only</button>
+        <button className="btn" disabled={phase === "loading"} onClick={() => { void handleRefresh("linear"); }}>Linear only</button>
         {report && <span className="badge system">+{report.githubAdded + report.linearAdded} new (gh {report.githubAdded}, linear {report.linearAdded})</span>}
       </div>
       {error && <div className="notice mini">{error}</div>}
