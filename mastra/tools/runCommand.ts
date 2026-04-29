@@ -7,17 +7,60 @@ import { SandboxClient } from "../sandboxClient";
  * AGE-49 sandbox-runner Worker via HMAC-signed HTTP and returns the stdout /
  * stderr / exit code.
  *
- * The tool is gated by an explicit allow-list. `command` is matched verbatim
- * against the prefix of a known-good command string — agents can pass tail
- * arguments (`git diff`, `git diff --stat`) but never substitute the leading
- * verb. Anything outside the allow-list is rejected with
- * `{ allowed: false, command, reason: "not in allow-list" }` so the agent
- * sees the failure and can adjust without ever reaching the network.
+ * The tool gates input through three layers, in order:
  *
- * Configure with environment variables (read at module load):
+ *   1. Forbidden-character check. Any shell metacharacter that could turn
+ *      a single allow-listed verb into a multi-command shell expression
+ *      (`;`, `&`, `|`, backtick, `$(`, `>`, `<`, newline, carriage return,
+ *      tab) is rejected before allow-list matching even runs. This blocks
+ *      `git status ; rm -rf /`, `git status && curl evil`,
+ *      `grep x . | cat /etc/shadow`, and similar bypasses where the
+ *      runner's shell would otherwise execute the second command.
+ *
+ *   2. `node --version` and any other entry whose `--eval` / `-e` flag
+ *      can hijack semantics is intentionally NOT in the default allow
+ *      list. Use a different verb if you need one.
+ *
+ *   3. Allow-list prefix match. A command must equal an entry exactly or
+ *      start with `<entry> ` (entry plus a single space). Tail arguments
+ *      are accepted but only after layers (1) and (2) have passed.
+ *
+ * Anything that fails any layer returns
+ *   { allowed: false, command, reason }
+ * without ever touching the network. The tool also `console.warn`s every
+ * denial so jailbreak attempts produce an audit trail.
+ *
+ * Configure the production accessor `runCommandTool()` with environment
+ * variables (read at first call):
  *   SANDBOX_RUNNER_URL    e.g. https://sandbox.codecolony.dev
  *   SANDBOX_HMAC_KEY      shared secret for HMAC-SHA256 signing
+ *
+ * In production (NODE_ENV === "production") missing env throws; in dev
+ * it logs a warning and returns a noop tool builder so the agent can
+ * still run without a sandbox.
  */
+
+/**
+ * Characters whose presence in a command tail can fork shell semantics.
+ * Listed verbatim so the regex below stays auditable.
+ */
+const FORBIDDEN_SHELL_CHARS: ReadonlyArray<string> = [
+  ";",
+  "&",
+  "|",
+  "`",
+  "$",
+  ">",
+  "<",
+  "\n",
+  "\r",
+  "\t",
+  "\\",
+  "(",
+  ")",
+] as const;
+
+const FORBIDDEN_SHELL_REGEX = /[;&|`$><\n\r\t\\()]/;
 
 export const DEFAULT_ALLOWED_COMMANDS = [
   "ls",
@@ -30,7 +73,6 @@ export const DEFAULT_ALLOWED_COMMANDS = [
   "git log",
   "git ls-files",
   "npm ls",
-  "node --version",
   "rg",
 ] as const;
 
@@ -41,6 +83,8 @@ export interface RunCommandToolDeps {
   sandbox: SandboxClient;
   /** Allow-list prefixes; defaults to `DEFAULT_ALLOWED_COMMANDS`. */
   allowList?: ReadonlyArray<string>;
+  /** Logger sink for denied commands; defaults to `console.warn`. */
+  onDeny?: (event: { command: string; reason: string }) => void;
 }
 
 const inputSchema = z.object({
@@ -48,7 +92,7 @@ const inputSchema = z.object({
     .string()
     .min(1)
     .describe(
-      "Shell command to run inside the sandbox. Must start with one of the allow-listed verbs.",
+      "Shell command to run inside the sandbox. Must start with one of the allow-listed verbs and must not contain shell metacharacters.",
     ),
   sandboxId: z
     .string()
@@ -71,13 +115,35 @@ const outputSchema = z.object({
 
 export type RunCommandResult = z.infer<typeof outputSchema>;
 
+/**
+ * Returns `null` if the command passes all gates, else a human-readable
+ * rejection reason. Exported for direct unit testing of the gating logic.
+ */
+export function rejectionReason(
+  command: string,
+  allowList: ReadonlyArray<string>,
+): string | null {
+  if (FORBIDDEN_SHELL_REGEX.test(command)) {
+    return `command contains forbidden shell character; reject before sandbox: ${FORBIDDEN_SHELL_CHARS.join(" ")}`;
+  }
+  const matches = allowList.some(
+    (prefix) => command === prefix || command.startsWith(`${prefix} `),
+  );
+  if (!matches) {
+    return `not in allow-list: ${allowList.join(", ")}`;
+  }
+  return null;
+}
+
+/**
+ * Back-compat alias kept for the existing test suite. Returns true iff
+ * `rejectionReason` would return null.
+ */
 export function isAllowed(
   command: string,
   allowList: ReadonlyArray<string>,
 ): boolean {
-  return allowList.some(
-    (prefix) => command === prefix || command.startsWith(`${prefix} `),
-  );
+  return rejectionReason(command, allowList) === null;
 }
 
 /**
@@ -87,38 +153,70 @@ export function isAllowed(
  */
 export function buildRunCommandTool(deps: RunCommandToolDeps) {
   const allowList = deps.allowList ?? DEFAULT_ALLOWED_COMMANDS;
+  const onDeny =
+    deps.onDeny ??
+    ((event: { command: string; reason: string }) => {
+      console.warn(
+        `[runCommand] denied: ${JSON.stringify({
+          command: event.command,
+          reason: event.reason,
+        })}`,
+      );
+    });
   return createTool({
     id: "runCommand",
     description:
-      "Run a single shell command inside the Code Colony sandbox runner. Use for read-only repo inspection (ls, cat, git diff, npm ls). Mutating commands are rejected.",
+      "Run a single shell command inside the Code Colony sandbox runner. Use for read-only repo inspection (ls, cat, git status / diff / log / ls-files, npm ls, grep, rg). Mutating commands and shell metacharacters are rejected before the sandbox is contacted.",
     inputSchema,
     outputSchema,
     execute: async (inputData): Promise<RunCommandResult> => {
       const { command, sandboxId } = inputData as z.infer<typeof inputSchema>;
-      if (!isAllowed(command, allowList)) {
+      const reason = rejectionReason(command, allowList);
+      if (reason !== null) {
+        onDeny({ command, reason });
+        return { allowed: false, command, reason };
+      }
+      try {
+        const res = await deps.sandbox.exec({ command, sandboxId });
         return {
-          allowed: false,
+          allowed: true,
           command,
-          reason: `not in allow-list: ${allowList.join(", ")}`,
+          exitCode: res.exitCode,
+          stdout: res.stdout,
+          stderr: res.stderr,
+          durationMs: res.durationMs,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(
+          `[runCommand] sandbox exec failed: ${JSON.stringify({
+            command,
+            sandboxId,
+            error: message,
+          })}`,
+        );
+        return {
+          allowed: true,
+          command,
+          stderr: message,
+          reason: `sandbox exec failed: ${message}`,
         };
       }
-      const res = await deps.sandbox.exec({ command, sandboxId });
-      return {
-        allowed: true,
-        command,
-        exitCode: res.exitCode,
-        stdout: res.stdout,
-        stderr: res.stderr,
-        durationMs: res.durationMs,
-      };
     },
   });
 }
 
 /**
- * Production accessor: reads `SANDBOX_RUNNER_URL` and `SANDBOX_HMAC_KEY` from
- * the environment. Throws at first call when either is missing — explicit
- * failure beats a half-configured tool that pretends to work.
+ * Production accessor: reads `SANDBOX_RUNNER_URL` and `SANDBOX_HMAC_KEY`
+ * from the environment.
+ *
+ *   - In production (NODE_ENV === "production") missing env throws — a
+ *     prod misconfiguration must be loud, not a degraded agent.
+ *   - In dev/test missing env logs a warning and throws so the caller
+ *     can decide to skip tool registration.
+ *
+ * `mastra/agents/backlog-triage.ts` uses a non-throwing wrapper that
+ * inspects the env once at module init.
  */
 export function runCommandTool() {
   const baseUrl = process.env.SANDBOX_RUNNER_URL;

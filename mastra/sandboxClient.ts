@@ -8,14 +8,21 @@
  *
  *   sig = hex(hmac-sha256(timestamp || body, secret))
  *
- * Callers inject `fetchImpl` for tests; production calls fall through to the
- * global `fetch`.
+ * Each request carries an `AbortSignal.timeout(timeoutMs)` so a hung
+ * runner cannot stall the agent loop. Failures throw a `SandboxError`
+ * carrying status code, response body excerpt, and the underlying cause —
+ * call sites can branch on `err.status` to distinguish auth failures
+ * (401), rate-limit (429), and 5xx without reparsing the message.
+ *
+ * Callers inject `fetchImpl` for tests; production calls fall through to
+ * the global `fetch`.
  */
 
 const ENCODER = new TextEncoder();
 
 export const TIMESTAMP_HEADER = "x-sandbox-ts";
 export const SIGNATURE_HEADER = "x-sandbox-sig";
+export const DEFAULT_TIMEOUT_MS = 60_000;
 
 export interface SandboxClientConfig {
   /** Base URL of the sandbox-runner Worker, no trailing slash. */
@@ -26,6 +33,8 @@ export interface SandboxClientConfig {
   fetchImpl?: typeof fetch;
   /** Optional `Date.now` injection for tests. */
   now?: () => number;
+  /** Per-request timeout in ms. Defaults to 60 seconds. */
+  timeoutMs?: number;
 }
 
 export interface ExecRequest {
@@ -60,13 +69,28 @@ export interface GitCloneResponse {
   sandboxId: string;
 }
 
+export class SandboxError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly path: string,
+    public readonly bodyExcerpt: string,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+    this.name = "SandboxError";
+  }
+}
+
 export class SandboxClient {
   private readonly fetchImpl: typeof fetch;
   private readonly now: () => number;
+  private readonly timeoutMs: number;
 
   constructor(private readonly config: SandboxClientConfig) {
     this.fetchImpl = config.fetchImpl ?? fetch;
     this.now = config.now ?? Date.now;
+    this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   exec(req: ExecRequest): Promise<ExecResponse> {
@@ -77,28 +101,58 @@ export class SandboxClient {
     return this.signedPost<GitCloneResponse>("/git-clone", req);
   }
 
-  health(): Promise<{ ok: boolean }> {
-    return this.fetchImpl(`${this.config.baseUrl}/health`)
-      .then((r) => r.json() as Promise<{ ok: boolean }>);
+  async health(): Promise<{ ok: boolean }> {
+    try {
+      const res = await this.fetchImpl(`${this.config.baseUrl}/health`, {
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+      if (!res.ok) {
+        const body = await safeRead(res);
+        return { ok: false, ...{ status: res.status, body } } as {
+          ok: boolean;
+        };
+      }
+      return (await res.json()) as { ok: boolean };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[sandbox] health check failed: ${message}`);
+      return { ok: false };
+    }
   }
 
   private async signedPost<T>(path: string, body: unknown): Promise<T> {
     const ts = String(this.now());
     const payload = JSON.stringify(body);
     const sig = await signHmac(ts, payload, this.config.hmacSecret);
-    const res = await this.fetchImpl(`${this.config.baseUrl}${path}`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        [TIMESTAMP_HEADER]: ts,
-        [SIGNATURE_HEADER]: sig,
-      },
-      body: payload,
-    });
+    let res: Response;
+    try {
+      res = await this.fetchImpl(`${this.config.baseUrl}${path}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          [TIMESTAMP_HEADER]: ts,
+          [SIGNATURE_HEADER]: sig,
+        },
+        body: payload,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new SandboxError(
+        `sandbox ${path} request failed before response: ${message}`,
+        0,
+        path,
+        "",
+        { cause: err },
+      );
+    }
     if (!res.ok) {
       const detail = await safeRead(res);
-      throw new Error(
+      throw new SandboxError(
         `sandbox ${path} failed with ${res.status}: ${detail}`,
+        res.status,
+        path,
+        detail,
       );
     }
     return (await res.json()) as T;
@@ -108,8 +162,9 @@ export class SandboxClient {
 async function safeRead(res: Response): Promise<string> {
   try {
     return await res.text();
-  } catch {
-    return "<no body>";
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return `<body read failed: ${message}>`;
   }
 }
 

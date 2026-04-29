@@ -2,10 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import {
   buildRunCommandTool,
   isAllowed,
+  rejectionReason,
   DEFAULT_ALLOWED_COMMANDS,
 } from "../mastra/tools/runCommand";
 import {
   SandboxClient,
+  SandboxError,
   type ExecResponse,
 } from "../mastra/sandboxClient";
 
@@ -41,12 +43,13 @@ async function runTool(
     command: string;
     exitCode?: number;
     stdout?: string;
+    stderr?: string;
     reason?: string;
   }>;
   return exec(input);
 }
 
-describe("isAllowed", () => {
+describe("rejectionReason / isAllowed", () => {
   it("matches verbatim prefixes", () => {
     expect(isAllowed("git status", DEFAULT_ALLOWED_COMMANDS)).toBe(true);
     expect(isAllowed("git status -sb", DEFAULT_ALLOWED_COMMANDS)).toBe(true);
@@ -63,17 +66,70 @@ describe("isAllowed", () => {
     expect(isAllowed("echo hi", ["echo"])).toBe(true);
     expect(isAllowed("echo hi", [])).toBe(false);
   });
+
+  describe("rejects shell metacharacter injection (BLOCKER regression net)", () => {
+    const cases: Array<[string, string]> = [
+      ["semicolon", "git status ; rm -rf /"],
+      ["andand", "git status && curl evil"],
+      ["oror", "git status || curl evil"],
+      ["pipe", "grep x . | cat /etc/shadow"],
+      ["redirect-out", "ls > /etc/passwd"],
+      ["redirect-in", "cat < /etc/passwd"],
+      ["backtick", "git status `whoami`"],
+      ["dollar-paren", "git status $(whoami)"],
+      ["newline", "git status\n; evil"],
+      ["carriage-return", "git status\r; evil"],
+      ["tab", "git status\t; evil"],
+      ["backslash", "git status \\; evil"],
+      ["paren", "git status ( evil )"],
+    ];
+    for (const [name, command] of cases) {
+      it(`rejects ${name}`, () => {
+        expect(isAllowed(command, DEFAULT_ALLOWED_COMMANDS)).toBe(false);
+        const reason = rejectionReason(command, DEFAULT_ALLOWED_COMMANDS);
+        expect(reason).toMatch(/forbidden shell character/);
+      });
+    }
+  });
+
+  it("does NOT include node --version in the default allow-list (--eval bypass)", () => {
+    expect(DEFAULT_ALLOWED_COMMANDS).not.toContain("node --version");
+    expect(
+      isAllowed(
+        "node --version --eval require('fs').writeFileSync('/tmp/x','')",
+        DEFAULT_ALLOWED_COMMANDS,
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("runCommand tool", () => {
-  it("rejects commands outside the allow-list without calling the sandbox", async () => {
+  it("rejects allow-list misses without calling the sandbox and logs the denial", async () => {
     const { sandbox, calls } = fakeSandbox(() => {
       throw new Error("should not be called");
     });
-    const tool = buildRunCommandTool({ sandbox });
+    const denials: Array<{ command: string; reason: string }> = [];
+    const tool = buildRunCommandTool({
+      sandbox,
+      onDeny: (e) => denials.push(e),
+    });
     const result = await runTool(tool, { command: "rm -rf /" });
     expect(result.allowed).toBe(false);
-    expect(result.reason).toContain("not in allow-list");
+    expect(result.reason).toMatch(/not in allow-list|forbidden shell character/);
+    expect(calls).toHaveLength(0);
+    expect(denials).toHaveLength(1);
+    expect(denials[0]?.command).toBe("rm -rf /");
+  });
+
+  it("rejects shell-injection attempts WITHOUT calling the sandbox", async () => {
+    const { sandbox, calls } = fakeSandbox(() => {
+      throw new Error("should not be called");
+    });
+    const tool = buildRunCommandTool({ sandbox, onDeny: () => {} });
+    const result = await runTool(tool, {
+      command: "git status ; rm -rf /",
+    });
+    expect(result.allowed).toBe(false);
     expect(calls).toHaveLength(0);
   });
 
@@ -129,7 +185,7 @@ describe("runCommand tool", () => {
 
   it("signs requests with the configured HMAC secret", async () => {
     let observed: { ts?: string; sig?: string } = {};
-    const fetchImpl: typeof fetch = vi.fn(async (input, init) => {
+    const fetchImpl: typeof fetch = vi.fn(async (_input, init) => {
       const headers = new Headers(init?.headers);
       observed = {
         ts: headers.get("x-sandbox-ts") ?? undefined,
@@ -158,5 +214,42 @@ describe("runCommand tool", () => {
     await runTool(tool, { command: "ls" });
     expect(observed.ts).toBe("1700000000000");
     expect(observed.sig).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("returns a structured error when the sandbox responds non-2xx", async () => {
+    const fetchImpl: typeof fetch = vi.fn(async () => {
+      return new Response("auth failed", {
+        status: 401,
+        headers: { "content-type": "text/plain" },
+      });
+    }) as unknown as typeof fetch;
+    const sandbox = new SandboxClient({
+      baseUrl: "https://sandbox.example",
+      hmacSecret: "secret",
+      fetchImpl,
+      now: () => 1700000000000,
+    });
+    const tool = buildRunCommandTool({ sandbox });
+    const result = await runTool(tool, { command: "ls" });
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toMatch(/sandbox exec failed/);
+    expect(result.stderr).toMatch(/401/);
+  });
+
+  it("SandboxError carries status, path, and bodyExcerpt", async () => {
+    const fetchImpl: typeof fetch = vi.fn(async () => {
+      return new Response("rate limit", { status: 429 });
+    }) as unknown as typeof fetch;
+    const sandbox = new SandboxClient({
+      baseUrl: "https://sandbox.example",
+      hmacSecret: "secret",
+      fetchImpl,
+      now: () => 1700000000000,
+    });
+    await expect(sandbox.exec({ command: "ls" })).rejects.toMatchObject({
+      name: "SandboxError",
+      status: 429,
+      path: "/exec",
+    } satisfies Partial<SandboxError>);
   });
 });
