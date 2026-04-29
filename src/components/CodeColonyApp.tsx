@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
-import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, createSimulatedRuntimeWorker, runSimulatedRuntimePreview } from "@/domain/runtime";
+import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, runSimulatedRuntimePreview, type RuntimeWorkerRequest, type RuntimeWorkerResult } from "@/domain/runtime";
 import type { AgentEmployee, BacklogIssue, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
 type Screen = "world" | "operations" | "governance" | "agents" | "runtime" | "artifact" | "marketplace" | "memory";
@@ -44,9 +44,11 @@ export function CodeColonyApp() {
           {screen === "governance" && <GovernanceScreen data={data} onVote={(decision) => setData((current) => voteOnApproval(current, "approval-spec-preview", decision))} />}
           {screen === "agents" && <AgentsScreen data={data} />}
           {screen === "runtime" && <RuntimeScreen data={data} onRerun={async () => {
-            const worker = createSimulatedRuntimeWorker(data);
-            const result = await worker.execute(DEFAULT_RUNTIME_PREVIEW_REQUEST);
-            setData((current) => appendRuntimeWorkerResult(current, "run-preview", result));
+            const params = new URLSearchParams(DEFAULT_RUNTIME_PREVIEW_REQUEST as unknown as Record<string, string>);
+            const response = await fetch(`/api/runtime/preview?${params.toString()}`);
+            if (!response.ok) throw new Error(`runtime preview failed: ${response.status}`);
+            const payload = await response.json() as { request: RuntimeWorkerRequest; result: RuntimeWorkerResult };
+            setData((current) => appendRuntimeWorkerResult(current, "run-preview", payload.result));
           }} />}
           {screen === "artifact" && <ArtifactScreen data={data} onApproveLearning={() => setData(approveArtifactLearning)} />}
           {screen === "memory" && <MemoryScreen data={data} />}
