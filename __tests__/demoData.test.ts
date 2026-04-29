@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approveArtifactLearning, demoData, moveJob, voteOnApproval } from "../src/domain/demoData";
+import { approveArtifactLearning, createRepositoryWorldScan, demoData, moveJob, voteOnApproval } from "../src/domain/demoData";
 
 describe("Code Colony demo state", () => {
   it("moves jobs across operation-board lanes", () => {
@@ -19,5 +19,40 @@ describe("Code Colony demo state", () => {
     const updated = approveArtifactLearning(demoData);
     expect(updated.memories.find((memory) => memory.id === "mem-2")?.status).toBe("accepted");
     expect(updated.skillProposals[0].approvalStatus).toBe("approved");
+  });
+
+  it("maps repository paths into world districts", () => {
+    const scan = createRepositoryWorldScan(demoData, [
+      "app/page.tsx",
+      "src/components/CodeColonyApp.tsx",
+      "src/domain/demoData.ts",
+      "__tests__/demoData.test.ts",
+      ".github/workflows/ci.yml",
+      "docs/product/agent_company_sim_detailed_spec.md",
+      "package.json",
+    ]);
+
+    expect(scan.totalFiles).toBe(7);
+    expect(scan.districts.find((district) => district.regionId === "frontend")?.fileCount).toBe(2);
+    expect(scan.districts.find((district) => district.regionId === "testing")?.fileCount).toBe(2);
+    expect(scan.districts.find((district) => district.regionId === "hq")?.samplePaths).toContain("src/domain/demoData.ts");
+    expect(scan.unmappedPaths).toEqual([]);
+  });
+
+  it("surfaces missing governance, test, and runtime signals", () => {
+    const scan = createRepositoryWorldScan(demoData, ["src/components/OnlyUi.tsx"]);
+
+    expect(scan.notes).toContain("No tests or CI workflow paths were found in the imported inventory.");
+    expect(scan.notes).toContain("No product, implementation, or domain contract paths were found in the imported inventory.");
+    expect(scan.notes).toContain("No runtime or configuration paths were found in the imported inventory.");
+  });
+
+  it("deduplicates paths and reports unmapped imports", () => {
+    const scan = createRepositoryWorldScan(demoData, ["  scripts/audit.ts ", "scripts/audit.ts", "vitest.config.mjs"]);
+
+    expect(scan.totalFiles).toBe(2);
+    expect(scan.districts.find((district) => district.regionId === "runtime")?.samplePaths).toEqual(["vitest.config.mjs"]);
+    expect(scan.unmappedPaths).toEqual(["scripts/audit.ts"]);
+    expect(scan.notes).toContain("1 imported path need manual district mapping.");
   });
 });

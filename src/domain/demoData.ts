@@ -1,6 +1,6 @@
-import type { DemoData, GovernanceState, Id } from "./types";
+import type { DemoData, GovernanceState, Id, RepositoryWorldScan, RepositoryWorldScanSource } from "./types";
 
-export const demoData: DemoData = {
+const demoSeed: Omit<DemoData, "repoScans"> = {
   company: { id: "company-agentic", name: "Agentic Engineering", purpose: "Build AI-native engineering systems with visible governance and memory.", reputation: 74, budget: 128000, trustLevel: 82 },
   projectWorld: { id: "world-code-colony", companyId: "company-agentic", name: "Code Colony", domain: "software", repoUrl: "https://github.com/Agentic-Engineering-Agency/code-colony", mapStatus: "active", slogan: "Where your repo becomes a living company." },
   regions: [
@@ -67,6 +67,100 @@ export const demoData: DemoData = {
   ],
   costLedger: [{ id: "cost-1", jobId: "job-spec-preview", agentRunId: "run-preview", modelProvider: "simulated", runtimeSeconds: 184, estimatedCostUsd: 1.42 }],
 };
+
+const demoRepositoryPaths = [
+  "app/layout.tsx",
+  "app/page.tsx",
+  "app/globals.css",
+  "src/components/CodeColonyApp.tsx",
+  "src/domain/types.ts",
+  "src/domain/demoData.ts",
+  "__tests__/demoData.test.ts",
+  ".github/workflows/ci.yml",
+  "docs/implementation-plan.md",
+  "docs/product/agent_company_sim_detailed_spec.md",
+  "docs/design/tokens.css",
+  "docs/design/components.css",
+  "docs/design/themes.css",
+  "public/assets/code-colony-logo.png",
+  "package.json",
+  "tsconfig.json",
+  "eslint.config.mjs",
+  "next.config.mjs",
+] as const;
+
+type RepoWorldData = Pick<DemoData, "projectWorld" | "regions" | "rooms">;
+const repoRegionIds = ["hq", "frontend", "runtime", "memory", "testing", "market"] as const;
+type RegionId = (typeof repoRegionIds)[number];
+
+function isRuntimeConfigPath(path: string) {
+  return path === "package.json" || path === "tsconfig.json" || path === "eslint.config.mjs" || path === "next.config.mjs" || path.endsWith(".config.mjs");
+}
+
+const repoPathRules: { regionId: RegionId; matches: (path: string) => boolean }[] = [
+  { regionId: "testing", matches: (path) => path.startsWith("__tests__/") || path.startsWith(".github/workflows/") },
+  { regionId: "frontend", matches: (path) => path.startsWith("app/") || path.startsWith("src/components/") || path.startsWith("public/assets/") || path.startsWith("docs/design/") },
+  { regionId: "hq", matches: (path) => path.startsWith("src/domain/") || path.startsWith("docs/product/") || path === "docs/implementation-plan.md" },
+  { regionId: "runtime", matches: isRuntimeConfigPath },
+];
+
+function isRepoRegionId(id: string): id is RegionId {
+  return repoRegionIds.some((regionId) => regionId === id);
+}
+
+export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonly string[], source: RepositoryWorldScanSource = "seeded_inventory"): RepositoryWorldScan {
+  const paths = [...new Set(rawPaths.map((path) => path.trim()).filter(Boolean))].sort();
+  const pathsByRegion = new Map<RegionId, string[]>();
+  const unmappedPaths: string[] = [];
+
+  for (const path of paths) {
+    const rule = repoPathRules.find((candidate) => candidate.matches(path));
+    if (!rule) {
+      unmappedPaths.push(path);
+      continue;
+    }
+    pathsByRegion.set(rule.regionId, [...(pathsByRegion.get(rule.regionId) ?? []), path]);
+  }
+
+  const districts = data.regions.map((region) => {
+    const regionPaths = isRepoRegionId(region.id) ? (pathsByRegion.get(region.id) ?? []) : [];
+    const rooms = data.rooms.filter((room) => room.regionId === region.id);
+    return {
+      regionId: region.id,
+      fileCount: regionPaths.length,
+      samplePaths: regionPaths.slice(0, 4),
+      generatedRoomNames: rooms.map((room) => room.name),
+      coverageSignals: regionPaths.length === 0 ? ["No repository paths mapped to this district yet."] : [],
+    };
+  });
+
+  const notes: string[] = [];
+  if (!paths.some((path) => path.startsWith("__tests__/") || path.startsWith(".github/workflows/"))) {
+    notes.push("No tests or CI workflow paths were found in the imported inventory.");
+  }
+  if (!paths.some((path) => path.startsWith("src/domain/") || path.startsWith("docs/product/") || path === "docs/implementation-plan.md")) {
+    notes.push("No product, implementation, or domain contract paths were found in the imported inventory.");
+  }
+  if (!paths.some(isRuntimeConfigPath)) {
+    notes.push("No runtime or configuration paths were found in the imported inventory.");
+  }
+  if (unmappedPaths.length > 0) {
+    notes.push(`${unmappedPaths.length} imported path${unmappedPaths.length === 1 ? "" : "s"} need manual district mapping.`);
+  }
+
+  return {
+    id: `repo-scan-${source}`,
+    projectWorldId: data.projectWorld.id,
+    source,
+    generatedAt: "2026-04-29",
+    totalFiles: paths.length,
+    districts,
+    unmappedPaths,
+    notes,
+  };
+}
+
+export const demoData: DemoData = { ...demoSeed, repoScans: [createRepositoryWorldScan(demoSeed, demoRepositoryPaths)] };
 
 export function moveJob(data: DemoData, jobId: Id, state: GovernanceState): DemoData {
   return { ...data, jobs: data.jobs.map((job) => (job.id === jobId ? { ...job, state } : job)) };

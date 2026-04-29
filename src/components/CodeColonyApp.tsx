@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { approveArtifactLearning, demoData, moveJob, voteOnApproval } from "@/domain/demoData";
-import type { AgentEmployee, DemoData, GovernanceState, Region, Room } from "@/domain/types";
+import type { AgentEmployee, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
 type Screen = "world" | "operations" | "governance" | "agents" | "runtime" | "artifact" | "marketplace" | "memory";
 const screens: { id: Screen; label: string }[] = [
@@ -46,7 +46,49 @@ function Hero({ data }: { data: DemoData }) {
 }
 
 function WorldScreen({ data, selectedRegion, onSelectRegion }: { data: DemoData; selectedRegion: Region; onSelectRegion: (id: string) => void }) {
-  return <section className="screen"><div className="board-layout"><div className="world-board">{data.regions.slice(1).map((region) => <Path key={`path-${region.id}`} from={data.regions[0]} to={region} />)}{data.regions.map((region) => <button key={region.id} className={`region-node ${selectedRegion.id === region.id ? "selected" : ""}`} style={{ left: `${region.position.x}%`, top: `${region.position.y}%`, "--district": `var(${region.colorVar})` } as CSSProperties} onClick={() => onSelectRegion(region.id)}><div className="nameplate">{region.name}</div><div className="tag-row"><span className={`badge dot ${region.riskLevel > 3 ? "risk" : region.riskLevel > 2 ? "warn" : "trust"}`}>Risk {region.riskLevel}</span><span className="badge dot trust">Trust {region.trust}%</span></div><div className="room-row" style={{ marginTop: 10 }}>{region.rooms.map((roomId) => <RoomMini key={roomId} room={data.rooms.find((room) => room.id === roomId)!} />)}</div></button>)}{data.agents.map((agent, index) => <AgentPin key={agent.id} agent={agent} x={18 + index * 12} y={30 + (index % 3) * 18} />)}</div><aside className="panel bracket"><div className="panel-head"><span className="ttl">Region Detail</span><span className="sub">Selected</span></div><div className="panel-body"><h2 className="pix" style={{ color: `var(${selectedRegion.colorVar})`, fontSize: 14 }}>{selectedRegion.name}</h2><p className="muted">Health {selectedRegion.health}% · Trust {selectedRegion.trust}% · Risk level {selectedRegion.riskLevel}</p><BoardMeters trust={selectedRegion.trust} risk={selectedRegion.riskLevel} /><h3 className="eyebrow">Active Jobs</h3><ul className="list">{selectedRegion.activeJobIds.map((jobId) => { const job = data.jobs.find((item) => item.id === jobId)!; return <li key={job.id}><div><b>{job.title}</b><span>{job.state} · {job.risk} risk · {job.estimate}</span></div></li>; })}</ul><div className="notice">Sisyphus/Ultrawork are runtime concepts here; Code Colony is the product surface.</div></div><span className="bl" /><span className="br" /></aside></div></section>;
+  const repoScan = data.repoScans[0];
+  return (
+    <section className="screen">
+      <div className="board-layout">
+        <div className="world-board">
+          {data.regions.slice(1).map((region) => <Path key={`path-${region.id}`} from={data.regions[0]} to={region} />)}
+          {data.regions.map((region) => <button key={region.id} className={`region-node ${selectedRegion.id === region.id ? "selected" : ""}`} style={{ left: `${region.position.x}%`, top: `${region.position.y}%`, "--district": `var(${region.colorVar})` } as CSSProperties} onClick={() => onSelectRegion(region.id)}><div className="nameplate">{region.name}</div><div className="tag-row"><span className={`badge dot ${region.riskLevel > 3 ? "risk" : region.riskLevel > 2 ? "warn" : "trust"}`}>Risk {region.riskLevel}</span><span className="badge dot trust">Trust {region.trust}%</span></div><div className="room-row" style={{ marginTop: 10 }}>{region.rooms.map((roomId) => <RoomMini key={roomId} room={data.rooms.find((room) => room.id === roomId)!} />)}</div></button>)}
+          {data.agents.map((agent, index) => <AgentPin key={agent.id} agent={agent} x={18 + index * 12} y={30 + (index % 3) * 18} />)}
+        </div>
+        <aside className="panel bracket">
+          <div className="panel-head"><span className="ttl">Region Detail</span><span className="sub">Selected</span></div>
+          <div className="panel-body">
+            <h2 className="pix" style={{ color: `var(${selectedRegion.colorVar})`, fontSize: 14 }}>{selectedRegion.name}</h2>
+            <p className="muted">Health {selectedRegion.health}% · Trust {selectedRegion.trust}% · Risk level {selectedRegion.riskLevel}</p>
+            <BoardMeters trust={selectedRegion.trust} risk={selectedRegion.riskLevel} />
+            <h3 className="eyebrow">Active Jobs</h3>
+            <ul className="list">{selectedRegion.activeJobIds.map((jobId) => { const job = data.jobs.find((item) => item.id === jobId)!; return <li key={job.id}><div><b>{job.title}</b><span>{job.state} · {job.risk} risk · {job.estimate}</span></div></li>; })}</ul>
+            <div className="notice">Sisyphus/Ultrawork are runtime concepts here; Code Colony is the product surface.</div>
+            {repoScan && <RepoScanPanel scan={repoScan} selectedRegionId={selectedRegion.id} />}
+          </div>
+          <span className="bl" /><span className="br" />
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; selectedRegionId: string }) {
+  const district = scan.districts.find((item) => item.regionId === selectedRegionId);
+  const sourceLabel = scan.source.replaceAll("_", " ");
+  const sourceDescription = scan.source === "seeded_inventory" ? "Seeded repository inventory" : "Live repository scan";
+  if (!district) return null;
+
+  return (
+    <div className="repo-scan-panel">
+      <div className="panel-head inline"><span className="ttl">Repo Import Scan</span><span className="sub">{sourceLabel}</span></div>
+      <p className="muted">{sourceDescription} mapped {scan.totalFiles} files into the project world. This is inspection data, not runtime mutation.</p>
+      <div className="repo-scan-count"><span>{district.fileCount}</span><b>{district.fileCount === 1 ? "file" : "files"} mapped to this district</b></div>
+      <div className="tag-row">{district.generatedRoomNames.map((room) => <span className="badge system" key={room}>{room}</span>)}</div>
+      <ul className="list compact">{district.samplePaths.map((path) => <li key={path}><div><b>{path}</b><span>Repository path sample</span></div></li>)}</ul>
+      {district.coverageSignals.concat(scan.notes).slice(0, 3).map((note) => <div className="notice mini" key={note}>{note}</div>)}
+    </div>
+  );
 }
 
 function OperationsScreen({ data, onMove }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void }) {
