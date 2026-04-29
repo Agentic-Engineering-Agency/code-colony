@@ -1,7 +1,12 @@
 export type HealthProbeResult = { available: boolean; detail?: string };
 export type HealthSummary = {
   generatedAt: string;
-  probes: { gh: HealthProbeResult; git: HealthProbeResult; runtime: HealthProbeResult };
+  probes: {
+    gh: HealthProbeResult;
+    git: HealthProbeResult;
+    runtime: HealthProbeResult;
+    convex: HealthProbeResult;
+  };
   ok: boolean;
 };
 
@@ -11,6 +16,7 @@ export type HealthRouteOptions = {
   probeGh?: HealthProbe;
   probeGit?: HealthProbe;
   probeRuntime?: HealthProbe;
+  probeConvex?: HealthProbe;
 };
 
 export type CommandRunner = (file: string, args: readonly string[]) => Promise<{ stdout: string }>;
@@ -31,8 +37,9 @@ export async function runHealthCheckRequest(options: HealthRouteOptions = {}): P
   const ghProbe = options.probeGh ?? (async () => ({ available: false, detail: "no probe configured" }));
   const gitProbe = options.probeGit ?? (async () => ({ available: false, detail: "no probe configured" }));
   const runtimeProbe = options.probeRuntime ?? (async () => ({ available: true, detail: "simulated worker" }));
+  const convexProbe = options.probeConvex ?? (async () => ({ available: false, detail: "no probe configured" }));
 
-  const [gh, git, runtime] = await Promise.all([ghProbe(), gitProbe(), runtimeProbe()]);
-  const ok = gh.available && git.available && runtime.available;
-  return { status: 200, body: { generatedAt, probes: { gh, git, runtime }, ok } };
+  const [gh, git, runtime, convex] = await Promise.all([ghProbe(), gitProbe(), runtimeProbe(), convexProbe()]);
+  const ok = gh.available && git.available && runtime.available && convex.available;
+  return { status: 200, body: { generatedAt, probes: { gh, git, runtime, convex }, ok } };
 }
