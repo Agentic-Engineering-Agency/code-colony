@@ -8,6 +8,7 @@ describe("health route core", () => {
       probeGh: async () => ({ available: true, detail: "gh 2.50.0" }),
       probeGit: async () => ({ available: true, detail: "git 2.45.1" }),
       probeRuntime: async () => ({ available: true, detail: "simulated worker" }),
+      probeConvex: async () => ({ available: true, detail: "convex \u00b7 3 backlog rows" }),
     });
 
     expect(response.status).toBe(200);
@@ -21,6 +22,7 @@ describe("health route core", () => {
       probeGh: async () => ({ available: false, detail: "command not found: gh" }),
       probeGit: async () => ({ available: true }),
       probeRuntime: async () => ({ available: true }),
+      probeConvex: async () => ({ available: true }),
     });
 
     expect(response.body.ok).toBe(false);
@@ -28,12 +30,13 @@ describe("health route core", () => {
     expect(response.body.probes.gh.detail).toBe("command not found: gh");
   });
 
-  it("falls back to defaults when probes are omitted: gh and git unavailable, runtime simulated", async () => {
+  it("falls back to defaults when probes are omitted: gh git convex unavailable, runtime simulated", async () => {
     const response = await runHealthCheckRequest();
 
     expect(response.body.probes.gh.available).toBe(false);
     expect(response.body.probes.git.available).toBe(false);
     expect(response.body.probes.runtime.available).toBe(true);
+    expect(response.body.probes.convex.available).toBe(false);
     expect(response.body.ok).toBe(false);
   });
 

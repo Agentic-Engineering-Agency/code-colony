@@ -190,7 +190,7 @@ function MemoryScreen({ data }: { data: DemoData }) { return <section className=
 function MarketplaceScreen({ data }: { data: DemoData }) { return <section className="market-grid">{data.marketplace.map((pkg) => <div className="card reference" style={{ width: "100%" }} key={pkg.id}><div className="cap"><span>{pkg.kind}</span><span>{pkg.version}</span></div><div className="body"><div className="ttl">{pkg.name}</div><p className="desc">{pkg.description}</p><div className="tag-row"><span className="badge trust">{pkg.trustTier}</span><span className="badge system">{pkg.installScope}</span></div><button className="btn primary" style={{ marginTop: 10 }}>Install / Equip</button></div></div>)}</section>; }
 
 type HealthProbe = { available: boolean; detail?: string };
-type HealthPayload = { probes: { gh: HealthProbe; git: HealthProbe; runtime: HealthProbe }; ok: boolean; generatedAt: string };
+type HealthPayload = { probes: { gh: HealthProbe; git: HealthProbe; runtime: HealthProbe; convex: HealthProbe }; ok: boolean; generatedAt: string };
 
 async function fetchHealth(): Promise<HealthPayload> {
   const response = await fetch("/api/health");
@@ -212,7 +212,8 @@ function HealthStrip({ fallback }: { fallback: { trustLevel: number; budget: num
     <Status label="seam" value={aggregateValue} tone={aggregateTone} title={aggregateTooltip} />
     <Status label="gh" value={probes ? (probes.gh.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.gh.available ? "trust" : "risk"} title={tooltipFor(probes?.gh)} />
     <Status label="git" value={probes ? (probes.git.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.git.available ? "trust" : "risk"} title={tooltipFor(probes?.git)} />
-    <Status label="rt" value={probes ? (probes.runtime.available ? "sim" : "off") : (error ? "err" : "…")} tone={probes?.runtime.available ? "system" : "risk"} title={tooltipFor(probes?.runtime)} />
+    <Status label="rt" value={probes ? (probes.runtime.available ? "sim" : "off") : (error ? "err" : "\u2026")} tone={probes?.runtime.available ? "system" : "risk"} title={tooltipFor(probes?.runtime)} />
+    <Status label="cv" value={probes ? (probes.convex.available ? "on" : "off") : (error ? "err" : "\u2026")} tone={probes?.convex.available ? "trust" : "risk"} title={tooltipFor(probes?.convex)} />
   </div>;
 }
 

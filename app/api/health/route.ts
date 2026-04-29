@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { demoData } from "@/domain/demoData";
 import { buildVersionProbe, runHealthCheckRequest, type CommandRunner } from "@/server/healthRouteCore";
 import { buildRuntimeHealthProbe } from "@/server/runtimeHealthProbe";
+import { buildConvexHealthProbe } from "@/server/convexHealthProbe";
 import { createTtlMemo } from "@/server/ttlMemo";
 import { jsonRouteResponse } from "@/server/routeResponse";
 
@@ -23,6 +24,7 @@ const healthMemo = createTtlMemo(
     probeGh: buildVersionProbe("gh", ["--version"], defaultRunner),
     probeGit: buildVersionProbe("git", ["--version"], defaultRunner),
     probeRuntime: buildRuntimeHealthProbe({ data: demoData }),
+    probeConvex: buildConvexHealthProbe({ convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL }),
   }),
   { ttlMs: HEALTH_TTL_MS },
 );
