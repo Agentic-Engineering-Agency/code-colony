@@ -18,3 +18,10 @@ convex/_generated
 
 # Alchemy IaC state (local dev)
 .alchemy/
+
+# Vite / TanStack Start (parallel scaffold; routeTree.gen.ts is committed)
+.vite
+dist
+.tanstack
+.output
+.wrangler
