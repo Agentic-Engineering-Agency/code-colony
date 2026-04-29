@@ -5,6 +5,7 @@ import { demoData } from "@/domain/demoData";
 import { buildVersionProbe, runHealthCheckRequest, type CommandRunner } from "@/server/healthRouteCore";
 import { buildRuntimeHealthProbe } from "@/server/runtimeHealthProbe";
 import { createTtlMemo } from "@/server/ttlMemo";
+import { buildCacheControl } from "@/server/cacheControl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,5 +29,8 @@ const healthMemo = createTtlMemo(
 
 export async function GET() {
   const result = await healthMemo.get();
-  return NextResponse.json(result.body, { status: result.status });
+  return NextResponse.json(result.body, {
+    status: result.status,
+    headers: { "Cache-Control": buildCacheControl(Math.floor(HEALTH_TTL_MS / 1000)) },
+  });
 }
