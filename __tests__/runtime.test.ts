@@ -46,4 +46,17 @@ describe("Simulated runtime worker", () => {
     expect(preview.events.every((event) => typeof event.timestamp === "string")).toBe(true);
     expect(preview.artifact?.diff).toContain("+ export type RuntimeEvent");
   });
+
+  it("re-running the worker after append still yields a coherent preview", async () => {
+    const worker = createSimulatedRuntimeWorker(demoData);
+    const first = await worker.execute(DEFAULT_RUNTIME_PREVIEW_REQUEST);
+    const afterFirst = appendRuntimeWorkerResult(demoData, "run-preview", first);
+    const secondWorker = createSimulatedRuntimeWorker(afterFirst);
+    const second = await secondWorker.execute(DEFAULT_RUNTIME_PREVIEW_REQUEST);
+    const afterSecond = appendRuntimeWorkerResult(afterFirst, "run-preview", second);
+
+    expect(afterSecond.events.length).toBe(demoData.events.length + first.events.length + second.events.length);
+    expect(afterSecond.events.filter((event) => event.runId === "run-preview").length).toBeGreaterThan(demoData.events.length);
+    expect(runSimulatedRuntimePreview(afterSecond, DEFAULT_RUNTIME_PREVIEW_REQUEST).artifact?.title).toBe("Spec-to-Diff Preview Bundle");
+  });
 });
