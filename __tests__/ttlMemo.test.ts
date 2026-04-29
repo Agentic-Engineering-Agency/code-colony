@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTtlMemo } from "../src/server/ttlMemo";
+import { createKeyedTtlMemo, createTtlMemo } from "../src/server/ttlMemo";
 
 describe("ttl memo", () => {
   it("returns the same value within the TTL without re-invoking the producer", async () => {
@@ -65,4 +65,38 @@ describe("ttl memo", () => {
     expect(await b).toBe(1);
     expect(calls).toBe(1);
   });
+
+describe("keyed ttl memo", () => {
+  it("isolates caches per key", async () => {
+    const calls: string[] = [];
+    const memo = createKeyedTtlMemo<string, string>(async (key) => { calls.push(key); return `${key}-result`; }, { ttlMs: 5_000, now: () => 1_000 });
+
+    expect(await memo.get("a")).toBe("a-result");
+    expect(await memo.get("b")).toBe("b-result");
+    expect(await memo.get("a")).toBe("a-result");
+    expect(calls).toEqual(["a", "b"]);
+  });
+
+  it("invalidate(key) only clears that key", async () => {
+    let counter = 0;
+    const memo = createKeyedTtlMemo<string, number>(async () => { counter += 1; return counter; }, { ttlMs: 60_000, now: () => 1_000 });
+
+    expect(await memo.get("a")).toBe(1);
+    expect(await memo.get("b")).toBe(2);
+    memo.invalidate("a");
+    expect(await memo.get("a")).toBe(3);
+    expect(await memo.get("b")).toBe(2);
+  });
+
+  it("invalidate() with no key clears every entry", async () => {
+    let counter = 0;
+    const memo = createKeyedTtlMemo<string, number>(async () => { counter += 1; return counter; }, { ttlMs: 60_000, now: () => 1_000 });
+
+    expect(await memo.get("a")).toBe(1);
+    expect(await memo.get("b")).toBe(2);
+    memo.invalidate();
+    expect(await memo.get("a")).toBe(3);
+    expect(await memo.get("b")).toBe(4);
+  });
+});
 });
