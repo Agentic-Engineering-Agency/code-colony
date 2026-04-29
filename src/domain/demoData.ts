@@ -227,3 +227,7 @@ export function rejectBacklogIssue(data: DemoData, issueId: Id): DemoData {
 export function applyRefreshedBacklog(data: DemoData, refreshed: readonly BacklogIssue[]): DemoData {
   return { ...data, backlog: [...refreshed] };
 }
+
+export function applyRefreshedRepoScan(data: DemoData, scan: RepositoryWorldScan): DemoData {
+  return { ...data, repoScans: [scan, ...data.repoScans.slice(1)] };
+}

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { applyRefreshedBacklog, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
+import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
 import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, createSimulatedRuntimeWorker, runSimulatedRuntimePreview } from "@/domain/runtime";
 import type { AgentEmployee, BacklogIssue, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
@@ -28,7 +28,12 @@ export function CodeColonyApp() {
         <nav className="nav-rail">{screens.map((item) => <button key={item.id} className={`btn nav-btn ${screen === item.id ? "active" : ""}`} onClick={() => setScreen(item.id)}>{item.label}</button>)}</nav>
         <main className="content">
           <Hero data={data} />
-          {screen === "world" && <WorldScreen data={data} selectedRegion={selectedRegion} onSelectRegion={setSelectedRegionId} />}
+          {screen === "world" && <WorldScreen data={data} selectedRegion={selectedRegion} onSelectRegion={setSelectedRegionId} onRefreshScan={async () => {
+            const response = await fetch("/api/repo/scan");
+            if (!response.ok) throw new Error(`scan failed: ${response.status}`);
+            const payload = await response.json() as { cwd: string | null; scan: RepositoryWorldScan };
+            setData((current) => applyRefreshedRepoScan(current, payload.scan));
+          }} />}
           {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} onRefreshBacklog={async () => {
             const response = await fetch("/api/backlog/refresh");
             if (!response.ok) throw new Error(`refresh failed: ${response.status}`);
@@ -56,7 +61,7 @@ function Hero({ data }: { data: DemoData }) {
   return <section className="hero compact bracket" style={{ marginBottom: 16 }}><div><div className="hero-tag">{data.company.name} · {data.projectWorld.repoUrl}</div><h1 className="hero-title code-colony">{data.projectWorld.name}<span className="sep">|</span>AI COMPANY COLONY</h1><p className="hero-blurb">A working local vertical slice: inspect the colony, approve a spec, assign an agent, preview a simulated Oh My Pi run, review artifacts, and crystallize memory/skill learning.</p></div><div className="hero-stats"><div className="hero-stat"><div className="v">6</div><div className="l">Regions</div></div><div className="hero-stat"><div className="v">6</div><div className="l">Agents</div></div><div className="hero-stat"><div className="v">1</div><div className="l">Run</div></div></div><span className="bl" /><span className="br" /></section>;
 }
 
-function WorldScreen({ data, selectedRegion, onSelectRegion }: { data: DemoData; selectedRegion: Region; onSelectRegion: (id: string) => void }) {
+function WorldScreen({ data, selectedRegion, onSelectRegion, onRefreshScan }: { data: DemoData; selectedRegion: Region; onSelectRegion: (id: string) => void; onRefreshScan: () => Promise<void> }) {
   const repoScan = data.repoScans[0];
   return (
     <section className="screen">
@@ -75,7 +80,7 @@ function WorldScreen({ data, selectedRegion, onSelectRegion }: { data: DemoData;
             <h3 className="eyebrow">Active Jobs</h3>
             <ul className="list">{selectedRegion.activeJobIds.map((jobId) => { const job = data.jobs.find((item) => item.id === jobId)!; return <li key={job.id}><div><b>{job.title}</b><span>{job.state} · {job.risk} risk · {job.estimate}</span></div></li>; })}</ul>
             <div className="notice">Sisyphus/Ultrawork are runtime concepts here; Code Colony is the product surface.</div>
-            {repoScan && <RepoScanPanel scan={repoScan} selectedRegionId={selectedRegion.id} />}
+            {repoScan && <RepoScanPanel scan={repoScan} selectedRegionId={selectedRegion.id} onRefresh={onRefreshScan} />}
           </div>
           <span className="bl" /><span className="br" />
         </aside>
@@ -84,7 +89,7 @@ function WorldScreen({ data, selectedRegion, onSelectRegion }: { data: DemoData;
   );
 }
 
-function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; selectedRegionId: string }) {
+function RepoScanPanel({ scan, selectedRegionId, onRefresh }: { scan: RepositoryWorldScan; selectedRegionId: string; onRefresh: () => Promise<void> }) {
   const district = scan.districts.find((item) => item.regionId === selectedRegionId);
   const sourceLabel = scan.source.replaceAll("_", " ");
   const sourceDescription = scan.source === "seeded_inventory" ? "Seeded repository inventory" : "Live repository scan";
@@ -93,6 +98,7 @@ function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; 
   return (
     <div className="repo-scan-panel">
       <div className="panel-head inline"><span className="ttl">Repo Import Scan</span><span className="sub">{sourceLabel}</span></div>
+      <RepoScanRefreshButton onRefresh={onRefresh} />
       <p className="muted">{sourceDescription} mapped {scan.totalFiles} files into the project world. This is inspection data, not runtime mutation.</p>
       <div className="repo-scan-count"><span>{district.fileCount}</span><b>{district.fileCount === 1 ? "file" : "files"} mapped to this district</b></div>
       <div className="tag-row">{district.generatedRoomNames.map((room) => <span className="badge system" key={room}>{room}</span>)}</div>
@@ -100,6 +106,20 @@ function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; 
       {district.coverageSignals.concat(scan.notes).slice(0, 3).map((note) => <div className="notice mini" key={note}>{note}</div>)}
     </div>
   );
+}
+
+function RepoScanRefreshButton({ onRefresh }: { onRefresh: () => Promise<void> }) {
+  const [phase, setPhase] = useState<"idle" | "loading">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const handle = async () => {
+    setPhase("loading");
+    setError(null);
+    try { await onRefresh(); } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setPhase("idle"); }
+  };
+  return <div className="action-row" style={{ marginTop: 8 }}>
+    <button className="btn primary" disabled={phase === "loading"} onClick={() => { void handle(); }}>{phase === "loading" ? "Scanning…" : "Refresh repo scan"}</button>
+    {error && <span className="badge dot risk">{error}</span>}
+  </div>;
 }
 
 function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog, onRefreshBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void; onRefreshBacklog: () => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
