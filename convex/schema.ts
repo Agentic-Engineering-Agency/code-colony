@@ -401,6 +401,37 @@ export default defineSchema({
     summary: v.string(),
     suggestedRegionSeedId: v.string(),
     status: v.union(v.literal("new"), v.literal("ingested"), v.literal("rejected")),
+    triageSuggestion: v.optional(v.string()),
     ingestedJobSeedId: v.optional(v.string()),
   }).index("by_seed_id", ["seedId"]).index("by_external_ref", ["source", "externalRef"]),
+
+  // ───── AGE-62 component-backed tables ─────
+
+  /** Landing page waitlist (AGE-54). One row per email; rate-limited insert. */
+  waitlistEntries: defineTable({
+    email: v.string(),
+    role: v.union(
+      v.literal("founder"),
+      v.literal("engineer"),
+      v.literal("operator"),
+      v.literal("investor"),
+      v.literal("curious"),
+    ),
+    repo: v.optional(v.string()),
+    joinedAt: v.optional(v.number()),
+  }).index("by_email", ["email"]),
+
+  /** Persistent text streaming sessions for triage rationale. */
+  triageStreams: defineTable({
+    issueSeedId: v.string(),
+    streamId: v.string(),
+  }).index("by_issue", ["issueSeedId"]),
+
+  /** Index of objects stored in Cloudflare R2 via @convex-dev/r2. */
+  r2Assets: defineTable({
+    key: v.string(),
+    uploadedAt: v.number(),
+    runSeedId: v.optional(v.string()),
+    filename: v.optional(v.string()),
+  }).index("by_key", ["key"]).index("by_run", ["runSeedId"]),
 });
