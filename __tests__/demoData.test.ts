@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { approveArtifactLearning, createRepositoryWorldScan, demoData, ingestBacklogIssue, moveJob, parseGitListingOutput, rejectBacklogIssue, voteOnApproval } from "../src/domain/demoData";
+import { applyRefreshedBacklog, approveArtifactLearning, createRepositoryWorldScan, demoData, ingestBacklogIssue, moveJob, parseGitListingOutput, rejectBacklogIssue, voteOnApproval } from "../src/domain/demoData";
 
 describe("Code Colony demo state", () => {
   it("moves jobs across operation-board lanes", () => {
@@ -117,5 +117,13 @@ describe("Code Colony demo state", () => {
     expect(next.backlog.find((entry) => entry.id === target.id)?.status).toBe("rejected");
     expect(next.jobs.some((job) => job.id === `job-from-${target.id}`)).toBe(false);
     expect(ingestBacklogIssue(next, target.id)).toBe(next);
+  });
+
+  it("applyRefreshedBacklog replaces backlog immutably", () => {
+    const refreshed = [{ id: "backlog-new", source: "github" as const, externalRef: "#999", title: "new", summary: "new", suggestedRegionId: "hq", status: "new" as const }];
+    const next = applyRefreshedBacklog(demoData, refreshed);
+    expect(next).not.toBe(demoData);
+    expect(next.backlog).toEqual(refreshed);
+    expect(demoData.backlog).not.toBe(next.backlog);
   });
 });
