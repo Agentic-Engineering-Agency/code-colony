@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { demoData } from "@/domain/demoData";
 import { runBacklogRefreshRequest } from "@/server/backlogRouteCore";
 import { createKeyedTtlMemo } from "@/server/ttlMemo";
+import { buildCacheControl } from "@/server/cacheControl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,5 +22,8 @@ export async function GET(request: Request) {
     source: url.searchParams.get("source") ?? "all",
   }).toString();
   const result = await backlogRefreshMemo.get(key);
-  return NextResponse.json(result.body, { status: result.status });
+  return NextResponse.json(result.body, {
+    status: result.status,
+    headers: { "Cache-Control": buildCacheControl(Math.floor(BACKLOG_TTL_MS / 1000)) },
+  });
 }
