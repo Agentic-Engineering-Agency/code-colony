@@ -1,4 +1,4 @@
-import type { DemoData, GovernanceState, Id, RepositoryWorldScan, RepositoryWorldScanSource } from "./types";
+import type { DemoData, GovernanceState, Id, RepositoryWorldScan } from "./types";
 
 const demoSeed: Omit<DemoData, "repoScans"> = {
   company: { id: "company-agentic", name: "Agentic Engineering", purpose: "Build AI-native engineering systems with visible governance and memory.", reputation: 74, budget: 128000, trustLevel: 82 },
@@ -108,7 +108,17 @@ function isRepoRegionId(id: string): id is RegionId {
   return repoRegionIds.some((regionId) => regionId === id);
 }
 
-export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonly string[], source: RepositoryWorldScanSource = "seeded_inventory"): RepositoryWorldScan {
+export type RepositoryWorldScanOptions = { source: "seeded_inventory"; generatedAt?: string } | { source: "live_scan"; generatedAt: string };
+
+export function parseGitListingOutput(stdout: string): string[] {
+  if (!stdout) return [];
+  const separator = stdout.includes("\0") ? "\0" : "\n";
+  return stdout.split(separator).map((entry) => entry.trim()).filter(Boolean);
+}
+
+export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonly string[]): RepositoryWorldScan;
+export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonly string[], options: RepositoryWorldScanOptions): RepositoryWorldScan;
+export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonly string[], options: RepositoryWorldScanOptions = { source: "seeded_inventory" }): RepositoryWorldScan {
   const paths = [...new Set(rawPaths.map((path) => path.trim()).filter(Boolean))].sort();
   const pathsByRegion = new Map<RegionId, string[]>();
   const unmappedPaths: string[] = [];
@@ -149,10 +159,10 @@ export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonl
   }
 
   return {
-    id: `repo-scan-${source}`,
+    id: `repo-scan-${options.source}`,
     projectWorldId: data.projectWorld.id,
-    source,
-    generatedAt: "2026-04-29",
+    source: options.source,
+    generatedAt: options.generatedAt ?? "2026-04-29",
     totalFiles: paths.length,
     districts,
     unmappedPaths,

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { approveArtifactLearning, createRepositoryWorldScan, demoData, moveJob, voteOnApproval } from "../src/domain/demoData";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { approveArtifactLearning, createRepositoryWorldScan, demoData, moveJob, parseGitListingOutput, voteOnApproval } from "../src/domain/demoData";
 
 describe("Code Colony demo state", () => {
   it("moves jobs across operation-board lanes", () => {
@@ -54,5 +57,35 @@ describe("Code Colony demo state", () => {
     expect(scan.districts.find((district) => district.regionId === "runtime")?.samplePaths).toEqual(["vitest.config.mjs"]);
     expect(scan.unmappedPaths).toEqual(["scripts/audit.ts"]);
     expect(scan.notes).toContain("1 imported path need manual district mapping.");
+  });
+
+  it("parses null-delimited and newline-delimited git listings", () => {
+    expect(parseGitListingOutput("")).toEqual([]);
+    expect(parseGitListingOutput("app/page.tsx\nsrc/domain/types.ts\n")).toEqual(["app/page.tsx", "src/domain/types.ts"]);
+    expect(parseGitListingOutput("app/page.tsx\0src/domain/types.ts\0")).toEqual(["app/page.tsx", "src/domain/types.ts"]);
+  });
+
+  it("records live_scan provenance with caller-supplied generatedAt", () => {
+    const generatedAt = "2026-04-29T12:00:00.000Z";
+    const scan = createRepositoryWorldScan(demoData, ["app/page.tsx"], { source: "live_scan", generatedAt });
+
+    expect(scan.source).toBe("live_scan");
+    expect(scan.generatedAt).toBe(generatedAt);
+    expect(scan.id).toBe("repo-scan-live_scan");
+  });
+
+  it("runs createRepositoryWorldScan over real git ls-files output", () => {
+    const repoRoot = resolve(__dirname, "..");
+    if (!existsSync(resolve(repoRoot, ".git"))) return;
+    const stdout = execFileSync("git", ["-C", repoRoot, "ls-files", "-z"], { encoding: "utf8" });
+    const paths = parseGitListingOutput(stdout);
+    const scan = createRepositoryWorldScan(demoData, paths, { source: "live_scan", generatedAt: "2026-04-29T12:00:00.000Z" });
+
+    expect(paths.length).toBeGreaterThan(0);
+    expect(scan.totalFiles).toBe(paths.length);
+    expect(scan.districts.find((district) => district.regionId === "frontend")?.fileCount).toBeGreaterThan(0);
+    expect(scan.districts.find((district) => district.regionId === "hq")?.fileCount).toBeGreaterThan(0);
+    expect(scan.districts.find((district) => district.regionId === "runtime")?.fileCount).toBeGreaterThan(0);
+    expect(scan.districts.find((district) => district.regionId === "testing")?.fileCount).toBeGreaterThan(0);
   });
 });
