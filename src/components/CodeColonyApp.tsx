@@ -190,27 +190,34 @@ function MarketplaceScreen({ data }: { data: DemoData }) { return <section class
 
 function HealthStrip({ fallback }: { fallback: { trustLevel: number; budget: number } }) {
   type Probes = { gh: { available: boolean; detail?: string }; git: { available: boolean; detail?: string }; runtime: { available: boolean; detail?: string } };
-  const [probes, setProbes] = useState<Probes | null>(null);
+  type HealthPayload = { probes: Probes; ok: boolean; generatedAt: string };
+  const [payload, setPayload] = useState<HealthPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/health")
-      .then(async (response) => { if (!response.ok) throw new Error(`health ${response.status}`); return response.json() as Promise<{ probes: Probes }>; })
-      .then((payload) => { if (!cancelled) setProbes(payload.probes); })
+      .then(async (response) => { if (!response.ok) throw new Error(`health ${response.status}`); return response.json() as Promise<HealthPayload>; })
+      .then((data) => { if (!cancelled) setPayload(data); })
       .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : String(err)); });
     return () => { cancelled = true; };
   }, []);
+  const probes = payload?.probes;
+  const tooltipFor = (probe?: { available: boolean; detail?: string }) => probe ? `${probe.available ? "available" : "unavailable"}${probe.detail ? `: ${probe.detail}` : ""}` : (error ?? "loading");
+  const aggregateValue = payload ? (payload.ok ? "ok" : "deg") : (error ? "err" : "…");
+  const aggregateTone = payload?.ok ? "trust" : payload || error ? "risk" : "system";
+  const aggregateTooltip = payload ? `seam health ${payload.ok ? "ok" : "degraded"} · ${payload.generatedAt}` : (error ?? "loading");
   return <div className="status-strip">
     <Status label="Trust" value={`${fallback.trustLevel}%`} tone="trust" />
     <Status label="Risk" value="Med" tone="risk" />
     <Status label="Budget" value={`$${Math.round(fallback.budget / 1000)}k`} tone="budget" />
-    <Status label="gh" value={probes ? (probes.gh.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.gh.available ? "trust" : "risk"} />
-    <Status label="git" value={probes ? (probes.git.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.git.available ? "trust" : "risk"} />
-    <Status label="rt" value={probes ? (probes.runtime.available ? "sim" : "off") : (error ? "err" : "…")} tone={probes?.runtime.available ? "system" : "risk"} />
+    <Status label="seam" value={aggregateValue} tone={aggregateTone} title={aggregateTooltip} />
+    <Status label="gh" value={probes ? (probes.gh.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.gh.available ? "trust" : "risk"} title={tooltipFor(probes?.gh)} />
+    <Status label="git" value={probes ? (probes.git.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.git.available ? "trust" : "risk"} title={tooltipFor(probes?.git)} />
+    <Status label="rt" value={probes ? (probes.runtime.available ? "sim" : "off") : (error ? "err" : "…")} tone={probes?.runtime.available ? "system" : "risk"} title={tooltipFor(probes?.runtime)} />
   </div>;
 }
 
-function Status({ label, value, tone }: { label: string; value: string; tone: string }) { return <span className="status-chip"><span className={`token sm ${tone === "budget" ? "coin" : tone}`}>{label[0]}</span>{label} <b>{value}</b></span>; }
+function Status({ label, value, tone, title }: { label: string; value: string; tone: string; title?: string }) { return <span className="status-chip" title={title}><span className={`token sm ${tone === "budget" ? "coin" : tone}`}>{label[0]}</span>{label} <b>{value}</b></span>; }
 function RoomMini({ room }: { room: Room }) { return <div className="room-mini" title={room.purpose}>{room.name.split(" ")[0]}</div>; }
 function AgentPin({ agent, x, y }: { agent: AgentEmployee; x: number; y: number }) { return <div className="agent-pin" style={{ left: `${x}%`, top: `${y}%` }} title={agent.name}><Standee agent={agent} /></div>; }
 function Standee({ agent }: { agent: AgentEmployee }) { const klass = agent.department === "review" ? "reviewer" : agent.department === "planning" ? "planner" : agent.department === "ops" ? "operator" : "frontend"; return <div className={`standee ${klass}`}><div className="body"><div className="head" /><div className="torso" /><div className="legs" /></div><div className="badge-pin" /></div>; }
