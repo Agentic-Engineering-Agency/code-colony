@@ -195,11 +195,19 @@ function HealthStrip({ fallback }: { fallback: { trustLevel: number; budget: num
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/health")
-      .then(async (response) => { if (!response.ok) throw new Error(`health ${response.status}`); return response.json() as Promise<HealthPayload>; })
-      .then((data) => { if (!cancelled) setPayload(data); })
-      .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : String(err)); });
-    return () => { cancelled = true; };
+    const load = async () => {
+      try {
+        const response = await fetch("/api/health");
+        if (!response.ok) throw new Error(`health ${response.status}`);
+        const data = (await response.json()) as HealthPayload;
+        if (!cancelled) { setPayload(data); setError(null); }
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      }
+    };
+    void load();
+    const interval = setInterval(() => { void load(); }, 5_000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
   const probes = payload?.probes;
   const tooltipFor = (probe?: { available: boolean; detail?: string }) => probe ? `${probe.available ? "available" : "unavailable"}${probe.detail ? `: ${probe.detail}` : ""}` : (error ?? "loading");
