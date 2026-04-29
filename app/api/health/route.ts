@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { demoData } from "@/domain/demoData";
 import { buildVersionProbe, runHealthCheckRequest, type CommandRunner } from "@/server/healthRouteCore";
 import { buildRuntimeHealthProbe } from "@/server/runtimeHealthProbe";
+import { createTtlMemo } from "@/server/ttlMemo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,11 +15,18 @@ const defaultRunner: CommandRunner = async (file, args) => {
   return { stdout: result.stdout };
 };
 
-export async function GET() {
-  const result = await runHealthCheckRequest({
+const HEALTH_TTL_MS = 5_000;
+
+const healthMemo = createTtlMemo(
+  () => runHealthCheckRequest({
     probeGh: buildVersionProbe("gh", ["--version"], defaultRunner),
     probeGit: buildVersionProbe("git", ["--version"], defaultRunner),
     probeRuntime: buildRuntimeHealthProbe({ data: demoData }),
-  });
+  }),
+  { ttlMs: HEALTH_TTL_MS },
+);
+
+export async function GET() {
+  const result = await healthMemo.get();
   return NextResponse.json(result.body, { status: result.status });
 }
