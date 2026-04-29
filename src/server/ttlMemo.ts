@@ -30,3 +30,30 @@ export function createTtlMemo<T>(produce: () => Promise<T>, options: TtlMemoOpti
     },
   };
 }
+
+
+export type KeyedTtlMemo<K extends string, T> = {
+  get(key: K): Promise<T>;
+  invalidate(key?: K): void;
+};
+
+export function createKeyedTtlMemo<K extends string, T>(produce: (key: K) => Promise<T>, options: TtlMemoOptions): KeyedTtlMemo<K, T> {
+  const memos = new Map<K, TtlMemo<T>>();
+  return {
+    get(key) {
+      let memo = memos.get(key);
+      if (!memo) {
+        memo = createTtlMemo(() => produce(key), options);
+        memos.set(key, memo);
+      }
+      return memo.get();
+    },
+    invalidate(key) {
+      if (key === undefined) {
+        memos.clear();
+        return;
+      }
+      memos.get(key)?.invalidate();
+    },
+  };
+}
