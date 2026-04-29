@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { approveArtifactLearning, demoData, moveJob, voteOnApproval } from "@/domain/demoData";
+import { approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
 import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, createSimulatedRuntimeWorker, runSimulatedRuntimePreview } from "@/domain/runtime";
-import type { AgentEmployee, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
+import type { AgentEmployee, BacklogIssue, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
 type Screen = "world" | "operations" | "governance" | "agents" | "runtime" | "artifact" | "marketplace" | "memory";
 const screens: { id: Screen; label: string }[] = [
@@ -29,7 +29,7 @@ export function CodeColonyApp() {
         <main className="content">
           <Hero data={data} />
           {screen === "world" && <WorldScreen data={data} selectedRegion={selectedRegion} onSelectRegion={setSelectedRegionId} />}
-          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} />}
+          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} />}
           {screen === "governance" && <GovernanceScreen data={data} onVote={(decision) => setData((current) => voteOnApproval(current, "approval-spec-preview", decision))} />}
           {screen === "agents" && <AgentsScreen data={data} />}
           {screen === "runtime" && <RuntimeScreen data={data} onRerun={async () => {
@@ -96,9 +96,33 @@ function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; 
   );
 }
 
-function OperationsScreen({ data, onMove }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void }) {
+function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void }) {
   const lanes: GovernanceState[] = ["proposed", "approved", "running", "review", "learned"];
-  return <section className="screen"><div className="queue-grid">{lanes.map((lane) => <div className="queue" key={lane}><div className="queue-title"><span>{lane}</span><span>{data.jobs.filter((job) => job.state === lane).length}</span></div>{data.jobs.filter((job) => job.state === lane).map((job) => <div className="mini-card" key={job.id}><h4>{job.title}</h4><p>{agentName(data, job.agentEmployeeId)} · {job.risk} risk · {job.estimate}</p><div className="action-row" style={{ marginTop: 8 }}><button className="btn primary" onClick={() => onMove(job.id, nextLane(lane))}>Move</button></div></div>)}</div>)}</div></section>;
+  return <section className="screen">
+    <div className="queue-grid">{lanes.map((lane) => <div className="queue" key={lane}><div className="queue-title"><span>{lane}</span><span>{data.jobs.filter((job) => job.state === lane).length}</span></div>{data.jobs.filter((job) => job.state === lane).map((job) => <div className="mini-card" key={job.id}><h4>{job.title}</h4><p>{agentName(data, job.agentEmployeeId)} · {job.risk} risk · {job.estimate}</p><div className="action-row" style={{ marginTop: 8 }}><button className="btn primary" onClick={() => onMove(job.id, nextLane(lane))}>Move</button></div></div>)}</div>)}</div>
+    <BacklogPanel data={data} onIngest={onIngestBacklog} onReject={onRejectBacklog} />
+  </section>;
+}
+
+function BacklogPanel({ data, onIngest, onReject }: { data: DemoData; onIngest: (issueId: string) => void; onReject: (issueId: string) => void }) {
+  const newIssues = data.backlog.filter((issue) => issue.status === "new");
+  const handled = data.backlog.filter((issue) => issue.status !== "new");
+  return <aside className="panel" style={{ marginTop: 16 }}>
+    <div className="panel-head"><span className="ttl">Backlog Ingest</span><span className="sub">{newIssues.length} pending</span></div>
+    <div className="panel-body">
+      <p className="muted">Imported issues from Linear, GitHub, and manual entries. Ingesting promotes the issue to a proposed Job in its suggested district.</p>
+      {newIssues.length === 0 && <p className="muted">No new backlog issues to ingest.</p>}
+      <ul className="list">{newIssues.map((issue) => <BacklogRow key={issue.id} issue={issue} onIngest={onIngest} onReject={onReject} />)}</ul>
+      {handled.length > 0 && <>
+        <h4 className="eyebrow" style={{ marginTop: 12 }}>Handled</h4>
+        <ul className="list">{handled.map((issue) => <li key={issue.id}><div><b>{issue.source}/{issue.externalRef}: {issue.title}</b><span>{issue.status}{issue.ingestedJobId ? ` → ${issue.ingestedJobId}` : ""}</span></div></li>)}</ul>
+      </>}
+    </div>
+  </aside>;
+}
+
+function BacklogRow({ issue, onIngest, onReject }: { issue: BacklogIssue; onIngest: (issueId: string) => void; onReject: (issueId: string) => void }) {
+  return <li><div><b>{issue.source}/{issue.externalRef}: {issue.title}</b><span>{issue.summary}</span><div className="action-row" style={{ marginTop: 8 }}><button className="btn primary" onClick={() => onIngest(issue.id)}>Ingest as Job</button><button className="btn warn" onClick={() => onReject(issue.id)}>Reject</button></div></div></li>;
 }
 
 function GovernanceScreen({ data, onVote }: { data: DemoData; onVote: (decision: "approve" | "reject" | "request_changes") => void }) {
