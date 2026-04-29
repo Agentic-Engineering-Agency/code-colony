@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
+import { applyRefreshedBacklog, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
 import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, createSimulatedRuntimeWorker, runSimulatedRuntimePreview } from "@/domain/runtime";
 import type { AgentEmployee, BacklogIssue, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
@@ -29,7 +29,13 @@ export function CodeColonyApp() {
         <main className="content">
           <Hero data={data} />
           {screen === "world" && <WorldScreen data={data} selectedRegion={selectedRegion} onSelectRegion={setSelectedRegionId} />}
-          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} />}
+          {screen === "operations" && <OperationsScreen data={data} onMove={(jobId, state) => setData((current) => moveJob(current, jobId, state))} onIngestBacklog={(issueId) => setData((current) => ingestBacklogIssue(current, issueId))} onRejectBacklog={(issueId) => setData((current) => rejectBacklogIssue(current, issueId))} onRefreshBacklog={async () => {
+            const response = await fetch("/api/backlog/refresh");
+            if (!response.ok) throw new Error(`refresh failed: ${response.status}`);
+            const payload = await response.json() as { backlog: import("@/domain/types").BacklogIssue[]; report: { githubAdded: number; linearAdded: number; errors: string[] } };
+            setData((current) => applyRefreshedBacklog(current, payload.backlog));
+            return payload.report;
+          }} />}
           {screen === "governance" && <GovernanceScreen data={data} onVote={(decision) => setData((current) => voteOnApproval(current, "approval-spec-preview", decision))} />}
           {screen === "agents" && <AgentsScreen data={data} />}
           {screen === "runtime" && <RuntimeScreen data={data} onRerun={async () => {
@@ -96,20 +102,40 @@ function RepoScanPanel({ scan, selectedRegionId }: { scan: RepositoryWorldScan; 
   );
 }
 
-function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void }) {
+function OperationsScreen({ data, onMove, onIngestBacklog, onRejectBacklog, onRefreshBacklog }: { data: DemoData; onMove: (jobId: string, state: GovernanceState) => void; onIngestBacklog: (issueId: string) => void; onRejectBacklog: (issueId: string) => void; onRefreshBacklog: () => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
   const lanes: GovernanceState[] = ["proposed", "approved", "running", "review", "learned"];
   return <section className="screen">
     <div className="queue-grid">{lanes.map((lane) => <div className="queue" key={lane}><div className="queue-title"><span>{lane}</span><span>{data.jobs.filter((job) => job.state === lane).length}</span></div>{data.jobs.filter((job) => job.state === lane).map((job) => <div className="mini-card" key={job.id}><h4>{job.title}</h4><p>{agentName(data, job.agentEmployeeId)} · {job.risk} risk · {job.estimate}</p><div className="action-row" style={{ marginTop: 8 }}><button className="btn primary" onClick={() => onMove(job.id, nextLane(lane))}>Move</button></div></div>)}</div>)}</div>
-    <BacklogPanel data={data} onIngest={onIngestBacklog} onReject={onRejectBacklog} />
+    <BacklogPanel data={data} onIngest={onIngestBacklog} onReject={onRejectBacklog} onRefresh={onRefreshBacklog} />
   </section>;
 }
 
-function BacklogPanel({ data, onIngest, onReject }: { data: DemoData; onIngest: (issueId: string) => void; onReject: (issueId: string) => void }) {
+function BacklogPanel({ data, onIngest, onReject, onRefresh }: { data: DemoData; onIngest: (issueId: string) => void; onReject: (issueId: string) => void; onRefresh: () => Promise<{ githubAdded: number; linearAdded: number; errors: string[] }> }) {
   const newIssues = data.backlog.filter((issue) => issue.status === "new");
   const handled = data.backlog.filter((issue) => issue.status !== "new");
+  const [phase, setPhase] = useState<"idle" | "loading">("idle");
+  const [report, setReport] = useState<{ githubAdded: number; linearAdded: number; errors: string[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const handleRefresh = async () => {
+    setPhase("loading");
+    setError(null);
+    try {
+      const result = await onRefresh();
+      setReport(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPhase("idle");
+    }
+  };
   return <aside className="panel" style={{ marginTop: 16 }}>
     <div className="panel-head"><span className="ttl">Backlog Ingest</span><span className="sub">{newIssues.length} pending</span></div>
     <div className="panel-body">
+      <div className="action-row" style={{ marginBottom: 12 }}><button className="btn primary" disabled={phase === "loading"} onClick={() => { void handleRefresh(); }}>{phase === "loading" ? "Refreshing…" : "Refresh from importers"}</button>
+        {report && <span className="badge system">+{report.githubAdded + report.linearAdded} new (gh {report.githubAdded}, linear {report.linearAdded})</span>}
+      </div>
+      {error && <div className="notice mini">{error}</div>}
+      {report && report.errors.length > 0 && report.errors.map((message) => <div className="notice mini" key={message}>{message}</div>)}
       <p className="muted">Imported issues from Linear, GitHub, and manual entries. Ingesting promotes the issue to a proposed Job in its suggested district.</p>
       {newIssues.length === 0 && <p className="muted">No new backlog issues to ingest.</p>}
       <ul className="list">{newIssues.map((issue) => <BacklogRow key={issue.id} issue={issue} onIngest={onIngest} onReject={onReject} />)}</ul>

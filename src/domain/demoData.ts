@@ -223,3 +223,7 @@ export function ingestBacklogIssue(data: DemoData, issueId: Id): DemoData {
 export function rejectBacklogIssue(data: DemoData, issueId: Id): DemoData {
   return { ...data, backlog: data.backlog.map((entry) => entry.id === issueId && entry.status === "new" ? { ...entry, status: "rejected" as const } : entry) };
 }
+
+export function applyRefreshedBacklog(data: DemoData, refreshed: readonly BacklogIssue[]): DemoData {
+  return { ...data, backlog: [...refreshed] };
+}
