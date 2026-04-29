@@ -1,0 +1,208 @@
+/* ============================================================
+   THEME TWEAKS — applied via [data-era], [data-purity], [data-density]
+   ============================================================ */
+
+/* HOLO CONSOLE — sci-fi mono-cyan */
+html[data-era="holo"] {
+  --bg-void:        #000308;
+  --bg-app:         #03070f;
+  --bg-board:       #050d1c;
+  --bg-felt:        #07142a;
+  --bg-panel:       #061224;
+  --bg-panel-2:     #0a1a30;
+  --bg-panel-3:     #0e2240;
+  --bg-inset:       #02060e;
+  --parchment-100:  #04223a;
+  --parchment-200:  #062c4a;
+  --parchment-300:  #084060;
+  --parchment-ink:  #9fefff;
+  --line-1:         #0e3a52;
+  --line-2:         #1a5a7a;
+  --line-3:         #2c8aa8;
+  --frame-gold:     #4ec3d9;
+  --frame-gold-dk:  #1a6a8a;
+  --frame-bronze:   #1a4a60;
+  --text-hi:        #d4f6ff;
+  --text-md:        #8ac4d6;
+  --text-lo:        #4a7a8e;
+  --text-pixel:     #9eeaff;
+  --d-auth:         #ff5a8a;
+  --d-frontend:     #4ed9c4;
+  --d-data:         #b07ad9;
+  --d-test:         #e0d04a;
+  --d-infra:        #4ec3d9;
+  --d-hq:           #9ee0ff;
+  --trust:          #4ed9b0;
+  --risk:           #ff4a7a;
+  --warn:           #d9c44a;
+  --budget:         #4ec3d9;
+  --memory:         #b07ad9;
+  --system:         #4ec3d9;
+  --tok-changes-bg: #d9c44a;
+  --tok-approve-bg: #4ed9b0;
+  --tok-reject-bg:  #ff4a7a;
+}
+
+/* COZY OFFICE — warm wood + soft */
+html[data-era="cozy"] {
+  --bg-void:        #1f1812;
+  --bg-app:         #28201a;
+  --bg-board:       #322822;
+  --bg-felt:        #3a302a;
+  --bg-panel:       #2f2620;
+  --bg-panel-2:     #3a302a;
+  --bg-panel-3:     #463a32;
+  --bg-inset:       #1f1812;
+  --parchment-100:  #f6ecd0;
+  --parchment-200:  #ecdfb4;
+  --parchment-300:  #d9c98c;
+  --parchment-ink:  #2a1f10;
+  --line-1:         #4a3c30;
+  --line-2:         #5e4c3e;
+  --line-3:         #7a624c;
+  --frame-gold:     #d8a460;
+  --frame-gold-dk:  #8a5e2c;
+  --frame-bronze:   #6c4830;
+  --text-hi:        #f4e8d0;
+  --text-md:        #d8c4a0;
+  --text-lo:        #9c8868;
+  --text-pixel:     #f8e8c8;
+  --d-auth:         #d97a5e;
+  --d-frontend:     #8ac698;
+  --d-data:         #b89ad6;
+  --d-test:         #e6c46e;
+  --d-infra:        #8aa6d4;
+  --d-hq:           #f0d088;
+  --trust:          #8ec872;
+  --risk:           #d9745c;
+  --warn:           #e6b85e;
+  --budget:         #d9a85e;
+  --memory:         #b890d4;
+  --system:         #6cb8c8;
+  --ultrawork:      #f09a5c;
+}
+
+/* DARK OPS — black + cyan */
+html[data-era="darkops"] {
+  --bg-void:        #000000;
+  --bg-app:         #050505;
+  --bg-board:       #080808;
+  --bg-felt:        #0c0c0c;
+  --bg-panel:       #0a0a0a;
+  --bg-panel-2:     #121212;
+  --bg-panel-3:     #1a1a1a;
+  --bg-inset:       #030303;
+  --parchment-100:  #0a1014;
+  --parchment-200:  #0e1a20;
+  --parchment-300:  #1a2a32;
+  --parchment-ink:  #a0e8d0;
+  --line-1:         #1a2a30;
+  --line-2:         #2a4048;
+  --line-3:         #3a6068;
+  --frame-gold:     #4ed9c0;
+  --frame-gold-dk:  #1a6a5c;
+  --frame-bronze:   #1a3a3a;
+  --text-hi:        #c4f4e4;
+  --text-md:        #7ac4b0;
+  --text-lo:        #3a6a5e;
+  --text-pixel:     #a0f4d8;
+  --d-auth:         #ff3a5a;
+  --d-frontend:     #4ed9c0;
+  --d-data:         #c04ad9;
+  --d-test:         #d9c44a;
+  --d-infra:        #4e8ad9;
+  --d-hq:           #4ed9c0;
+  --trust:          #4ed9c0;
+  --risk:           #ff3a5a;
+  --warn:           #d9c44a;
+  --budget:         #4ed9c0;
+  --memory:         #c04ad9;
+  --system:         #4ed9c0;
+  --ultrawork:      #ff8a3a;
+}
+
+/* ============================================================
+   PIXEL PURITY
+   ============================================================ */
+html[data-purity="1"] body { font-family: var(--f-mono); }
+html[data-purity="1"] .panel-head .ttl,
+html[data-purity="1"] .eyebrow,
+html[data-purity="1"] .badge,
+html[data-purity="1"] .pix,
+html[data-purity="1"] .pix-sm,
+html[data-purity="1"] .doc-section h2 {
+  text-shadow: 1px 0 0 currentColor;
+}
+html[data-purity="1"] .panel,
+html[data-purity="1"] .mock,
+html[data-purity="1"] .swatch,
+html[data-purity="1"] .kv,
+html[data-purity="1"] .card { border-radius: 0 !important; box-shadow: 0 3px 0 #000a, 0 0 0 1px var(--line-2) !important; }
+html[data-purity="1"] .btn { border-bottom-width: 4px; border-radius: 0; }
+
+html[data-purity="2"] body {
+  font-family: var(--f-pixel); font-size: 11px;
+}
+html[data-purity="2"] * { border-radius: 0 !important; }
+html[data-purity="2"] body, html[data-purity="2"] .panel-body,
+html[data-purity="2"] .mock-body, html[data-purity="2"] .swatch,
+html[data-purity="2"] .panel { font-family: var(--f-pixel); font-size: 10px; line-height: 1.6; letter-spacing: 0.02em; }
+html[data-purity="2"] .hero-blurb, html[data-purity="2"] .sec-sub,
+html[data-purity="2"] .lede, html[data-purity="2"] .muted,
+html[data-purity="2"] ul.list span, html[data-purity="2"] .kv > div:nth-child(even),
+html[data-purity="2"] .card .desc {
+  font-family: var(--f-pixel) !important; font-size: 9px !important; line-height: 1.7 !important;
+  letter-spacing: 0.04em !important;
+}
+html[data-purity="2"] .panel, html[data-purity="2"] .card, html[data-purity="2"] .swatch,
+html[data-purity="2"] .mock, html[data-purity="2"] .kv, html[data-purity="2"] .btn {
+  box-shadow: 0 4px 0 #000d, 0 0 0 1px var(--line-3) !important;
+}
+html[data-purity="2"] body {
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, #00000030 2px 4px);
+}
+
+/* ============================================================
+   DENSITY
+   ============================================================ */
+html[data-density="comfy"] .doc { padding: 64px 48px 128px; }
+html[data-density="comfy"] .doc-section { margin-top: 96px; }
+html[data-density="comfy"] .doc-section + .doc-section { padding-top: 96px; }
+html[data-density="comfy"] .panel-body { padding: 22px; }
+html[data-density="comfy"] .panel-head { padding: 14px 18px; }
+html[data-density="comfy"] .doc-section h2 { font-size: 22px; }
+html[data-density="comfy"] .hero { padding: 44px 48px; }
+html[data-density="comfy"] .hero-title { font-size: 34px; }
+html[data-density="comfy"] body { font-size: 15px; }
+html[data-density="comfy"] .grid-2,
+html[data-density="comfy"] .grid-3 { gap: 28px; }
+
+html[data-density="dense"] .doc { padding: 24px 20px 48px; max-width: 1200px; }
+html[data-density="dense"] .doc-section { margin-top: 32px; }
+html[data-density="dense"] .doc-section + .doc-section { padding-top: 32px; }
+html[data-density="dense"] .panel-body { padding: 8px 10px; }
+html[data-density="dense"] .panel-head { padding: 6px 8px; }
+html[data-density="dense"] .panel-head .ttl { font-size: 9px; }
+html[data-density="dense"] .doc-section h2 { font-size: 14px; }
+html[data-density="dense"] .doc-section .sec-head { margin-bottom: 12px; }
+html[data-density="dense"] .hero { padding: 16px 20px; gap: 12px; }
+html[data-density="dense"] .hero-title { font-size: 18px; }
+html[data-density="dense"] .hero-blurb { font-size: 12px; margin-top: 8px; }
+html[data-density="dense"] body { font-size: 12px; }
+html[data-density="dense"] .grid-2 { gap: 10px; }
+html[data-density="dense"] .grid-3 { gap: 8px; }
+html[data-density="dense"] .grid-4 { gap: 6px; }
+html[data-density="dense"] ul.list li { padding: 4px 0; }
+html[data-density="dense"] ul.list b { font-size: 9px; }
+html[data-density="dense"] ul.list span { font-size: 11px; }
+html[data-density="dense"] .kv > div { padding: 6px 8px; font-size: 11px; }
+html[data-density="dense"] .palette-row { padding: 10px 0; }
+html[data-density="dense"] .swatch .chip { height: 36px; }
+html[data-density="dense"] .swatch .meta { padding: 4px 6px; }
+html[data-density="dense"] .card { width: 168px; }
+html[data-density="dense"] .card .art { height: 70px; }
+html[data-density="dense"] .card .body { padding: 6px 8px; }
+html[data-density="dense"] .btn { padding: 6px 9px; font-size: 9px; }
+html[data-density="dense"] .badge { padding: 1px 5px; font-size: 8px; }
+html[data-density="dense"] .spec { padding: 10px 12px; }
+html[data-density="dense"] .mock-body { padding: 8px; min-height: 200px; }

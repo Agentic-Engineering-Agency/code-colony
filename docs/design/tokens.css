@@ -1,0 +1,134 @@
+/* ============================================================
+   SISYPHUS · AI COMPANY SIM — DESIGN TOKENS v1.0
+   Pixel-art management sim + tabletop board game UI
+   ============================================================ */
+
+:root {
+  /* ---------- BACKGROUNDS ---------- */
+  --bg-void:        #07090f;   /* outer void / behind everything */
+  --bg-app:         #0d111c;   /* app shell base */
+  --bg-board:       #121728;   /* world map / felt */
+  --bg-felt:        #1a2036;   /* table felt under cards */
+  --bg-panel:       #161b2c;   /* panel surface */
+  --bg-panel-2:     #1d2438;   /* panel raised */
+  --bg-panel-3:     #252c44;   /* panel hover/selected */
+  --bg-inset:       #0b0f1a;   /* inset wells (code, lists) */
+
+  /* Parchment / card surfaces (warm) */
+  --parchment-100:  #f3e8c8;
+  --parchment-200:  #e8d8a8;
+  --parchment-300:  #d8c188;
+  --parchment-ink:  #2a2410;
+
+  /* ---------- BORDERS / FRAMES ---------- */
+  --line-1:         #2a3252;   /* hairline */
+  --line-2:         #3a4570;   /* default */
+  --line-3:         #4f5a8a;   /* emphasis */
+  --frame-gold:     #c9a24a;   /* card frame, badges */
+  --frame-gold-dk:  #8a6c25;
+  --frame-bronze:   #7a5a32;
+
+  /* ---------- TEXT ---------- */
+  --text-hi:        #f1e9d2;   /* primary on dark */
+  --text-md:        #c9c2ae;
+  --text-lo:        #8a8676;
+  --text-faint:     #5a5b6e;
+  --text-on-parch:  #2a2410;
+  --text-pixel:     #f8eccb;   /* pixel-label headings */
+
+  /* ---------- DOMAIN / DISTRICT ACCENTS ---------- */
+  --d-auth:         #c5524a;   /* Auth — red brick */
+  --d-frontend:     #6cc4a1;   /* Frontend — mint */
+  --d-data:         #b07ad0;   /* Data — violet */
+  --d-test:         #e0b54a;   /* Testing Grounds — wheat */
+  --d-infra:        #7892d6;   /* Infra — steel blue */
+  --d-hq:           #e6c97a;   /* HQ — gold */
+
+  /* ---------- STATUS ACCENTS ---------- */
+  --trust:          #6fc97a;   /* trust / approved / health */
+  --trust-dk:       #2f7a3a;
+  --risk:           #e4654a;   /* risk / failed / incident */
+  --risk-dk:        #8a2c1c;
+  --warn:           #e6b73a;   /* approval pending / warning */
+  --warn-dk:        #8a6a14;
+  --budget:         #d9a83a;   /* gold coin */
+  --budget-dk:      #8a6a14;
+  --memory:         #a878d9;   /* purple — memory/knowledge */
+  --memory-dk:      #5a3a8a;
+  --system:         #4ec3d9;   /* cyan — Sisyphus / system intel */
+  --system-dk:      #1d6a7a;
+  --compute:        #7e8eea;   /* blue — compute */
+  --compute-dk:     #3a4ab0;
+  --review:         #e6b73a;   /* same as warn */
+  --runtime:        #4ec3d9;   /* runtime active = system cyan */
+  --ultrawork:      #ff8a3a;   /* orange — focused operation */
+
+  /* ---------- TOKEN COLORS (BOARD-GAME) ---------- */
+  --tok-approve-fg: #1a3a1f;
+  --tok-approve-bg: #6fc97a;
+  --tok-reject-fg:  #3a1414;
+  --tok-reject-bg:  #e4654a;
+  --tok-changes-fg: #3a2a08;
+  --tok-changes-bg: #e6b73a;
+
+  /* ---------- SPACING (4px pixel grid) ---------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+
+  /* ---------- RADII (kept SMALL — pixel feel) ---------- */
+  --r-0: 0px;     /* sharp pixel */
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 6px;
+
+  /* ---------- ELEVATION ---------- */
+  --shadow-flat:    0 0 0 1px var(--line-1);
+  --shadow-card:    0 2px 0 0 #000a, 0 0 0 1px var(--line-2);
+  --shadow-raised:  0 4px 0 0 #000c, 0 0 0 1px var(--line-3);
+  --shadow-token:   0 2px 0 0 #0008, inset 0 1px 0 #fff3;
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --f-pixel:    "Press Start 2P", "VT323", monospace;     /* headings, KPIs, labels */
+  --f-display:  "VT323", "Press Start 2P", monospace;     /* large numerics */
+  --f-body:     "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  --f-mono:     "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ---------- UI METRICS ---------- */
+  --topbar-h:   56px;
+  --tray-h:     96px;
+  --rail-w:     280px;
+  --advisor-w:  340px;
+}
+
+/* ----- Reset / base ----- */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg-void);
+  color: var(--text-hi);
+  font-family: var(--f-body);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+img { image-rendering: pixelated; image-rendering: crisp-edges; }
+a { color: var(--system); text-decoration: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-inset); }
+::-webkit-scrollbar-thumb { background: var(--line-2); border: 2px solid var(--bg-inset); }
+
+/* ----- Pixel utility ----- */
+.pix { font-family: var(--f-pixel); letter-spacing: 0.02em; image-rendering: pixelated; }
+.pix-sm { font-family: var(--f-pixel); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.mono { font-family: var(--f-mono); }
+.eyebrow { font-family: var(--f-pixel); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-lo); }

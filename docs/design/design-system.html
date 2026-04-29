@@ -1,0 +1,1138 @@
+<!DOCTYPE html><html lang="en"><head>
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sisyphus · AI Company Sim — Design System v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/themes.css">
+<style>
+  /* doc-only layout */
+  .doc-grid { display: grid; grid-template-columns: 220px 1fr; gap: 32px; }
+  @media (max-width: 1000px){ .doc-grid { grid-template-columns: 1fr; } .toc { position: static; } }
+</style>
+</head>
+<body data-cc-id="cc-1" style="cursor: crosshair;">
+
+<!-- ===================== HERO ===================== -->
+<div class="doc">
+  <div class="hero bracket">
+    <div class="row" style="gap:18px">
+      <div class="crest">S</div>
+      <div>
+        <div class="hero-tag">Design Direction · v1.0 · April 2026</div>
+        <h1 class="hero-title">SISYPHUS<span class="sep">|</span>AI COMPANY SIM</h1>
+        <p class="hero-blurb">A multiplayer AI company sim where your repository becomes a playable pixel-art world and your governance happens on a tabletop. This document defines the visual language, components, screens, asset system, and engineering split for v1.</p>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="v">14</div><div class="l">Sections</div></div>
+      <div class="hero-stat"><div class="v">62</div><div class="l">Components</div></div>
+      <div class="hero-stat"><div class="v">13</div><div class="l">Screens</div></div>
+    </div>
+    <span class="bl"></span><span class="br"></span>
+  </div>
+
+  <div class="doc-grid" style="margin-top:32px">
+
+    <!-- ===================== TOC ===================== -->
+    <aside>
+      <nav class="toc">
+        <h5>Contents</h5>
+        <ol>
+          <li><a href="#s1">Design principles</a></li>
+          <li><a href="#s2">Visual identity</a></li>
+          <li><a href="#s3">Color system</a></li>
+          <li><a href="#s4">Typography</a></li>
+          <li><a href="#s5">Layout system</a></li>
+          <li><a href="#s6">Components</a></li>
+          <li><a href="#s7">Screens</a></li>
+          <li><a href="#s8">Asset generation</a></li>
+          <li><a href="#s9">React + PixiJS</a></li>
+          <li><a href="#s10">Interaction states</a></li>
+          <li><a href="#s11">Motion</a></li>
+          <li><a href="#s12">Accessibility</a></li>
+          <li><a href="#s13">Theming</a></li>
+          <li><a href="#s14">Deliverables &amp; QA</a></li>
+        </ol>
+      </nav>
+    </aside>
+
+    <main>
+
+    <!-- ===================== 1. PRINCIPLES ===================== -->
+    <section id="s1" class="doc-section" style="margin-top:0">
+      <div class="sec-head">
+        <span class="sec-num">01</span>
+        <div>
+          <h2>Design Principles</h2>
+          <p class="sec-sub">Ten rules that govern every screen, asset, and animation. When two principles fight, "every artifact is reviewable" wins.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <ul class="list">
+          <li><div><b>Project as playable board</b><span>The repo is a world. Districts, rooms, agents, and tracks are first-class — not metaphors layered on a dashboard.</span></div></li>
+          <li><div><b>Specs before execution</b><span>Meaningful work begins as a spec card. Cards must be drawn, debated, voted, and placed before agents move.</span></div></li>
+          <li><div><b>Every artifact is reviewable</b><span>Diffs, ADRs, memories, skill updates — all surface as bundles a human can approve, reject, or request changes on.</span></div></li>
+          <li><div><b>Risk and trust are visible</b><span>Two persistent tracks on every screen. Color, position, and pixel weight all reinforce them.</span></div></li>
+          <li><div><b>Modular over bespoke</b><span>Tiles, frames, tokens, and standees are composed from a small library. No hero illustrations.</span></div></li>
+        </ul>
+        <ul class="list">
+          <li><div><b>Professional first, whimsical second</b><span>Pixel and tabletop are tone, not theme. Copy stays operational; humor is rare and earned.</span></div></li>
+          <li><div><b>Multiplayer decisions are obvious</b><span>Who voted, who hasn't, who's watching, who's working — visible without opening a panel.</span></div></li>
+          <li><div><b>Memory and learning are tangible</b><span>Memories are crystals. Skills level up with audible/visible ceremony. They are objects, not log lines.</span></div></li>
+          <li><div><b>Readable pixels</b><span>Pixel for headings, KPIs, and labels. Sans-serif for any body text longer than a line.</span></div></li>
+          <li><div><b>AI-generatable assets</b><span>Every asset has a fixed grid, palette slot, and naming pattern. An agent can generate a new tile and slot it in with no manual touch-up.</span></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== 2. VISUAL IDENTITY ===================== -->
+    <section id="s2" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">02</span>
+        <div>
+          <h2>Visual Identity</h2>
+          <p class="sec-sub">Mood, art direction, density, and the line we walk between pixel-art game and developer tool.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel bracket">
+          <div class="panel-head"><span class="ttl">Mood Board</span></div>
+          <div class="panel-body">
+            <div class="grid-3" style="gap:8px">
+              <div class="region" style="aspect-ratio: 1/1"><div class="grid"></div><div class="nameplate">AUTH DISTRICT</div></div>
+              <div class="region" style="aspect-ratio: 1/1; --bg-board:#1a1d2c"><div class="grid"></div><div class="nameplate">DATA DISTRICT</div></div>
+              <div class="region" style="aspect-ratio: 1/1"><div class="grid"></div><div class="nameplate">FRONTEND</div></div>
+            </div>
+            <p style="color:var(--text-md); margin: 14px 0 0; font-size:13px">Dark navy felt under warm parchment cards. Pixel sprites lit from upper-left. Brass and gold trim on important frames; everything else is restrained.</p>
+          </div>
+          <span class="bl"></span><span class="br"></span>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="ttl">Art Direction Rules</span></div>
+          <div class="panel-body">
+            <ul class="list">
+              <li><div><b>Pixel density: 1× sprites at 16/32/64/128</b><span>Drawn at native size, never upscaled with smoothing. Display at 2× via CSS for hi-DPI.</span></div></li>
+              <li><div><b>Limited palette per asset</b><span>Each tile uses at most 6 colors drawn from a single domain ramp. Status is applied as an outline color, not by repainting the sprite.</span></div></li>
+              <li><div><b>Lighting is consistent</b><span>Light source upper-left at ~30°. Highlights are 1–2 pixels; shadows are darkened ramp colors, never pure black.</span></div></li>
+              <li><div><b>Avoid clutter</b><span>Map shows districts; rooms only appear at zoom ≥ 2. Tokens and standees never overlap text.</span></div></li>
+              <li><div><b>Text is sans</b><span>Pixel font is for &lt;3-word labels and KPIs only. Anything longer breaks readability.</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="kv" style="margin-top:18px">
+        <div class="k">Influence — Pixel Sim</div><div>Tile-based world, side-on standees, modular buildings, day/night ambient lighting (subtle, not literal).</div>
+        <div class="k">Influence — Tabletop</div><div>Card frames with caption strips, board tracks with cells, polyhedral approval tokens, brass corner brackets on hero frames.</div>
+        <div class="k">Influence — Developer Tool</div><div>Monospace diffs, clear info density, keyboard-first controls, no animations on critical numerics.</div>
+        <div class="k">Avoid</div><div>Fantasy iconography in v1, hand-drawn illustrations, gradient-heavy hero art, neon glow, cute-mascots-as-employees.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 3. COLOR SYSTEM ===================== -->
+    <section id="s3" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">03</span>
+        <div>
+          <h2>Color System</h2>
+          <p class="sec-sub">Dark navy base, warm parchment surfaces for tabletop components, and a tightly-restricted accent set so status reads at a glance.</p>
+        </div>
+      </div>
+
+      <!-- Backgrounds -->
+      <div class="palette-row">
+        <div>
+          <h4>Backgrounds</h4>
+          <p class="desc">Layered shell: void → app → board → felt → panel. Use depth deliberately; don't pile.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#07090f"></div><div class="meta"><div class="name">bg-void</div><div class="val">#07090F</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#0d111c"></div><div class="meta"><div class="name">bg-app</div><div class="val">#0D111C</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#121728"></div><div class="meta"><div class="name">bg-board</div><div class="val">#121728</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#1a2036"></div><div class="meta"><div class="name">bg-felt</div><div class="val">#1A2036</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#161b2c"></div><div class="meta"><div class="name">bg-panel</div><div class="val">#161B2C</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#1d2438"></div><div class="meta"><div class="name">bg-panel-2</div><div class="val">#1D2438</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#252c44"></div><div class="meta"><div class="name">bg-panel-3</div><div class="val">#252C44</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#0b0f1a"></div><div class="meta"><div class="name">bg-inset</div><div class="val">#0B0F1A</div></div></div>
+        </div>
+      </div>
+
+      <!-- Parchment -->
+      <div class="palette-row">
+        <div>
+          <h4>Parchment / Cards</h4>
+          <p class="desc">Every tabletop component (cards, scroll panels) sits on warm parchment. Ink is near-black with a brown tint.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#f3e8c8"></div><div class="meta"><div class="name">parchment-100</div><div class="val">#F3E8C8</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#e8d8a8"></div><div class="meta"><div class="name">parchment-200</div><div class="val">#E8D8A8</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#d8c188"></div><div class="meta"><div class="name">parchment-300</div><div class="val">#D8C188</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#2a2410"></div><div class="meta"><div class="name">parchment-ink</div><div class="val">#2A2410</div></div></div>
+        </div>
+      </div>
+
+      <!-- Borders -->
+      <div class="palette-row">
+        <div>
+          <h4>Borders &amp; Frames</h4>
+          <p class="desc">Hairlines for grids; gold and bronze for hero frames, cards, and tokens.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#2a3252"></div><div class="meta"><div class="name">line-1</div><div class="val">#2A3252</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#3a4570"></div><div class="meta"><div class="name">line-2</div><div class="val">#3A4570</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#4f5a8a"></div><div class="meta"><div class="name">line-3</div><div class="val">#4F5A8A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#c9a24a"></div><div class="meta"><div class="name">frame-gold</div><div class="val">#C9A24A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#8a6c25"></div><div class="meta"><div class="name">frame-gold-dk</div><div class="val">#8A6C25</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#7a5a32"></div><div class="meta"><div class="name">frame-bronze</div><div class="val">#7A5A32</div></div></div>
+        </div>
+      </div>
+
+      <!-- Districts -->
+      <div class="palette-row">
+        <div>
+          <h4>District Accents</h4>
+          <p class="desc">One hue per district. Used for region nameplates, agent badges, room roofs, and connection lines.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#c5524a"></div><div class="meta"><div class="name">d-auth</div><div class="val">#C5524A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#6cc4a1"></div><div class="meta"><div class="name">d-frontend</div><div class="val">#6CC4A1</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#b07ad0"></div><div class="meta"><div class="name">d-data</div><div class="val">#B07AD0</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#e0b54a"></div><div class="meta"><div class="name">d-test</div><div class="val">#E0B54A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#7892d6"></div><div class="meta"><div class="name">d-infra</div><div class="val">#7892D6</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#e6c97a"></div><div class="meta"><div class="name">d-hq</div><div class="val">#E6C97A</div></div></div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="palette-row">
+        <div>
+          <h4>Status &amp; Resource</h4>
+          <p class="desc">Trust, risk, budget, memory, system, compute. Each has a "dk" variant for token rims and inset wells.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#6fc97a"></div><div class="meta"><div class="name">trust</div><div class="val">#6FC97A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#e4654a"></div><div class="meta"><div class="name">risk</div><div class="val">#E4654A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#e6b73a"></div><div class="meta"><div class="name">warn / review</div><div class="val">#E6B73A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#d9a83a"></div><div class="meta"><div class="name">budget</div><div class="val">#D9A83A</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#a878d9"></div><div class="meta"><div class="name">memory</div><div class="val">#A878D9</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#4ec3d9"></div><div class="meta"><div class="name">system / runtime</div><div class="val">#4EC3D9</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#7e8eea"></div><div class="meta"><div class="name">compute</div><div class="val">#7E8EEA</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#ff8a3a"></div><div class="meta"><div class="name">ultrawork</div><div class="val">#FF8A3A</div></div></div>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="palette-row">
+        <div>
+          <h4>Text</h4>
+          <p class="desc">Four levels on dark; one ink color on parchment. Don't invent more.</p>
+        </div>
+        <div class="swatch-grid">
+          <div class="swatch"><div class="chip" style="background:#f1e9d2"></div><div class="meta"><div class="name">text-hi</div><div class="val">#F1E9D2</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#c9c2ae"></div><div class="meta"><div class="name">text-md</div><div class="val">#C9C2AE</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#8a8676"></div><div class="meta"><div class="name">text-lo</div><div class="val">#8A8676</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#5a5b6e"></div><div class="meta"><div class="name">text-faint</div><div class="val">#5A5B6E</div></div></div>
+          <div class="swatch"><div class="chip" style="background:#f8eccb"></div><div class="meta"><div class="name">text-pixel</div><div class="val">#F8ECCB</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 4. TYPE ===================== -->
+    <section id="s4" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">04</span>
+        <div>
+          <h2>Typography</h2>
+          <p class="sec-sub">Three typefaces: a pixel display, a clean sans for body, and a mono for code/diffs. Pixel font earns its place — body text never uses it.</p>
+        </div>
+      </div>
+
+      <div class="spec">
+        <div class="role">Pixel display · Press Start 2P · 18–28px · letter-spacing 0.02em</div>
+        <div class="sample pix" style="font-size:24px">SISYPHUS · AI COMPANY SIM</div>
+        <div class="meta">Use for app title, modal H1, KPI numerics, panel section numbers. Never below 10px.</div>
+      </div>
+      <div class="spec">
+        <div class="role">Pixel label · Press Start 2P · 9–11px · uppercase · 0.08em–0.16em</div>
+        <div class="sample pix-sm">PROJECT WORLD MAP · ROOM VIEW · AGENT PANEL</div>
+        <div class="meta">Panel headers, badges, board cells, button text, eyebrows.</div>
+      </div>
+      <div class="spec">
+        <div class="role">Display numeric · VT323 · 28–48px</div>
+        <div class="sample" style="font-family:var(--f-display); font-size:42px; line-height:1; color:var(--budget)">8,230</div>
+        <div class="meta">Big numbers in KPIs (budget, compute, memory count) where you want pixel feel without losing legibility.</div>
+      </div>
+      <div class="spec">
+        <div class="role">Body · Inter · 14px · 1.45 line-height</div>
+        <div class="sample" style="font-size:14px">Persistent agent-employees own jobs in rooms; their loadout, trust, and traits persist across runtime sessions and influence which work they're eligible for.</div>
+        <div class="meta">All paragraph text, list items, descriptions on cards (when on dark surfaces), tooltips.</div>
+      </div>
+      <div class="spec">
+        <div class="role">Card body · Inter · 11.5–13px on parchment</div>
+        <div class="sample" style="font-size:12.5px; background:var(--parchment-100); color:var(--parchment-ink); padding:10px 12px; border:1px solid var(--frame-gold-dk); width:fit-content">Add passwordless login using magic links. Scope: Medium · Risk: High</div>
+        <div class="meta">Card descriptions sit on parchment with the dark ink color. Card titles use the pixel label style.</div>
+      </div>
+      <div class="spec">
+        <div class="role">Mono · JetBrains Mono · 12px</div>
+        <pre class="code mono" style="margin:8px 0 0"><span class="ln">112</span>function sendMagicLink(email) {
+<span class="rem"><span class="ln">113</span>-  const url = baseUrl + "/login";</span>
+<span class="add"><span class="ln">114</span>+  const url = baseUrl + "/magic-link";</span>
+<span class="ln">115</span>  // generate token
+<span class="ln">116</span>  const token = createToken(email);</pre>
+        <div class="meta" style="margin-top:8px">Diffs, ADRs, schemas, agent traces. Never reduce below 12px in review surfaces.</div>
+      </div>
+
+      <div class="kv" style="margin-top:18px">
+        <div class="k">Pairing rule</div><div>Press Start 2P + Inter + JetBrains Mono. Replace pixel font with VT323 only for legibility-critical numerics &gt; 24px.</div>
+        <div class="k">Min sizes</div><div>Pixel: 9px / Body: 13px / Mono: 12px / Card titles: 11px pixel.</div>
+        <div class="k">Forbidden</div><div>Pixel font in paragraphs. Mono outside code or numerics. More than three families on one screen.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 5. LAYOUT ===================== -->
+    <section id="s5" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">05</span>
+        <div>
+          <h2>Layout System</h2>
+          <p class="sec-sub">A consistent five-zone shell. World/board in the center; advisor on the right; tray at the bottom.</p>
+        </div>
+      </div>
+
+      <div class="mock" data-cc-id="cc-2">
+        <div class="mock-bar">
+          <span class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+          <span>SISYPHUS · APP SHELL</span>
+          <span class="right muted mono" style="font-size:11px">1440 × 900 reference</span>
+        </div>
+        <div style="display:grid; grid-template-rows: 56px 1fr 96px; height: 520px; background: var(--bg-app);">
+          <!-- topbar -->
+          <div style="display:grid; grid-template-columns: auto 1fr auto auto; align-items:center; gap:18px; padding:0 16px; background: var(--bg-board); border-bottom: 1px solid var(--line-3);">
+            <div class="row" style="gap:10px"><div class="crest" style="width:28px;height:28px;font-size:12px">S</div><span class="pix" style="font-size:11px; color:var(--text-pixel)">SISYPHUS</span></div>
+            <div></div>
+            <div class="row" style="gap:14px">
+              <span class="badge trust dot">TRUST 82%</span>
+              <span class="badge risk dot">RISK 28%</span>
+              <span class="badge warn dot">BUDGET 24,560</span>
+              <span class="badge system dot">COMPUTE 12,450</span>
+            </div>
+            <div class="row" style="gap:6px">
+              <span class="badge">WK 12</span>
+              <span class="badge">TURN 3/6</span>
+            </div>
+          </div>
+          <!-- body -->
+          <div style="display:grid; grid-template-columns: 200px 1fr 280px; gap: 0; min-height: 0;">
+            <!-- left rail -->
+            <div style="background: var(--bg-panel); border-right: 1px solid var(--line-2); padding: 12px;">
+              <div class="eyebrow">NAVIGATION</div>
+              <ul class="list" style="margin-top:8px">
+                <li><div><b>World Map</b><span class="muted">/world</span></div></li>
+                <li><div><b>Planning</b><span class="muted">/plan</span></div></li>
+                <li><div><b>Engineering</b><span class="muted">/eng</span></div></li>
+                <li><div><b>Review</b><span class="muted">/review</span></div></li>
+                <li><div><b>Risk</b><span class="muted">/risk</span></div></li>
+                <li><div><b>Memory</b><span class="muted">/memory</span></div></li>
+                <li><div><b>Market</b><span class="muted">/market</span></div></li>
+              </ul>
+            </div>
+            <!-- center -->
+            <div style="background: var(--bg-board); position: relative; border-right: 1px solid var(--line-2); display: grid; place-items: center; height: 367.742px;" data-cc-id="cc-3">
+              <div style="text-align:center">
+                <div class="eyebrow" style="color:var(--budget)">CENTER STAGE</div>
+                <div class="pix" style="font-size:14px; color:var(--text-pixel); margin-top:6px">WORLD MAP / BOARD / ROOM</div>
+                <div class="muted" style="margin-top:6px; max-width: 32ch">Pixi canvas owns this region. React overlays float for nameplates and tooltips.</div>
+              </div>
+            </div>
+            <!-- advisor -->
+            <div style="background: var(--bg-panel); padding: 12px;">
+              <div class="eyebrow" style="color:var(--system)">SISYPHUS · ADVISOR</div>
+              <div style="margin-top:8px; padding:10px; background: var(--bg-inset); border:1px solid var(--line-2)">
+                <div class="pix" style="font-size:10px; color:var(--system)">NEEDS ATTENTION</div>
+                <div style="font-size:12px; color:var(--text-md); margin-top:6px">Spec touches Auth District. High-risk area. Suggest review.</div>
+                <div class="row" style="gap:6px; margin-top:10px">
+                  <span class="btn primary" style="padding:6px 8px; font-size:9px">APPROVE</span>
+                  <span class="btn warn" style="padding:6px 8px; font-size:9px">REQUEST CHANGES</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- tray -->
+          <div style="background: var(--bg-felt); border-top: 1px solid var(--line-3); display:grid; grid-template-columns: 1fr auto; align-items:center; gap: 16px; padding: 0 16px;">
+            <div class="row" style="gap:10px">
+              <span class="eyebrow">ACTION TRAY</span>
+              <span class="badge">DRAW SPEC</span>
+              <span class="badge">ASSIGN AGENT</span>
+              <span class="badge">VOTE</span>
+              <span class="badge">REVIEW ARTIFACT</span>
+              <span class="badge">START ULTRAWORK</span>
+            </div>
+            <div class="track">
+              <div class="cell on" style="--accent:var(--system)">1</div>
+              <div class="cell on" style="--accent:var(--system)">2</div>
+              <div class="cell cur on" style="--accent:var(--system)">3</div>
+              <div class="cell">4</div>
+              <div class="cell">5</div>
+              <div class="cell">6</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="kv">
+          <div class="k">Top resource bar</div><div>56px tall. Logo, 4 resource pills (trust/risk/budget/compute), week + turn, settings cluster. Always visible.</div>
+          <div class="k">Left rail</div><div>200–280px. Primary nav. Collapses to 56px icon-only at &lt;1280px.</div>
+          <div class="k">Main stage</div><div>Pixi-owned. World, board, or room. React overlays for nameplates, tooltips, modal triggers.</div>
+          <div class="k">Right advisor</div><div>340px. Sisyphus feed (events) + advisor (recommended next step) + agent slot. Pinnable.</div>
+          <div class="k">Bottom tray</div><div>96px. Action buttons + turn track. Grows to 220px when "Cards in hand" view is toggled.</div>
+        </div>
+        <div class="kv">
+          <div class="k">Spacing scale</div><div>4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64. Pixel-grid friendly.</div>
+          <div class="k">Panel padding</div><div>14px body / 10–12px header. Never less than 8px on dense rows.</div>
+          <div class="k">Modal width</div><div>Approve / Reject: 480px. Spec / ADR editor: 720px. Artifact review: 1080px.</div>
+          <div class="k">Card sizes</div><div>Mini 160×220 · Standard 220×300 · Large 280×380. All in the 4px grid.</div>
+          <div class="k">Breakpoints</div><div>≥1440 full · ≥1200 collapse rail · ≥1024 advisor as drawer · &lt;1024 tablet (single-pane).</div>
+        </div>
+      </div>
+    </section>
+    </main>
+  </div>
+</div>
+
+<div class="doc">
+  <div class="doc-grid">
+    <aside></aside>
+    <main>
+
+    <!-- ===================== 6. COMPONENTS ===================== -->
+    <section id="s6" class="doc-section" style="margin-top:0">
+      <div class="sec-head">
+        <span class="sec-num">06</span>
+        <div>
+          <h2>Component System</h2>
+          <p class="sec-sub">Sixty-two components across navigation, world, cards, tokens, panels, and controls. Built from a small set of frame, surface, and shape primitives.</p>
+        </div>
+      </div>
+
+      <!-- Tokens -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 18px 0 10px;">TOKENS · BOARD-GAME PIECES</h3>
+      <div class="panel"><div class="panel-body">
+        <div class="row wrap" style="gap:18px; align-items:flex-end">
+          <div class="center"><span class="token approve">✓</span><div class="eyebrow" style="margin-top:6px">APPROVE</div></div>
+          <div class="center"><span class="token reject">✗</span><div class="eyebrow" style="margin-top:6px">REJECT</div></div>
+          <div class="center"><span class="token changes">~</span><div class="eyebrow" style="margin-top:6px">CHANGES</div></div>
+          <div class="center"><span class="token risk">!</span><div class="eyebrow" style="margin-top:6px">RISK</div></div>
+          <div class="center"><span class="token trust">★</span><div class="eyebrow" style="margin-top:6px">TRUST</div></div>
+          <div class="center"><span class="token coin">$</span><div class="eyebrow" style="margin-top:6px">BUDGET</div></div>
+          <div class="center"><span class="token memory">M</span><div class="eyebrow" style="margin-top:6px">MEMORY</div></div>
+          <div class="center"><span class="token compute">C</span><div class="eyebrow" style="margin-top:6px">COMPUTE</div></div>
+          <div class="center"><span class="token review">R</span><div class="eyebrow" style="margin-top:6px">REVIEW</div></div>
+        </div>
+        <hr>
+        <div class="row wrap" style="gap:14px; align-items:center">
+          <span class="token sm approve">✓</span>
+          <span class="token sm reject">✗</span>
+          <span class="token sm risk">!</span>
+          <span class="token sm trust">★</span>
+          <span class="token sm coin">$</span>
+          <span class="token sm memory">M</span>
+          <span class="muted">Small variant (28×28) for inline placement on cards and rows.</span>
+        </div>
+      </div></div>
+
+      <!-- Cards -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">CARDS · TABLETOP COMPONENTS</h3>
+      <div class="row wrap" style="gap:18px">
+        <div class="card spec">
+          <div class="cap"><span>SPEC CARD</span><span>S-042</span></div>
+          <div class="art"><div class="marker">SPEC</div></div>
+          <div class="body">
+            <div class="ttl">MAGIC LINK LOGIN</div>
+            <div class="desc">Add passwordless login using magic-link emails with 10-min TTL.</div>
+          </div>
+          <div class="stats"><span>SCOPE · M</span><span>RISK · HIGH</span><span>EST · 3D</span></div>
+        </div>
+
+        <div class="card job">
+          <div class="cap"><span>JOB CARD</span><span>J-117</span></div>
+          <div class="art"><div class="marker">JOB</div></div>
+          <div class="body">
+            <div class="ttl">IMPLEMENT MAGIC LINK</div>
+            <div class="desc">Agent: Ada · Estimate: 3D · Complexity: Medium · Spec linked.</div>
+          </div>
+          <div class="stats"><span>OWNER · ADA</span><span>STATE · IN-PROGRESS</span></div>
+        </div>
+
+        <div class="card artifact">
+          <div class="cap"><span>ARTIFACT CARD</span><span>PR #142</span></div>
+          <div class="art"><div class="marker">PULL REQUEST</div></div>
+          <div class="body">
+            <div class="ttl">PR · 12 files · 8 tests added</div>
+            <div class="desc">Diff covers auth handler, magic-link service, two new tests.</div>
+          </div>
+          <div class="stats"><span>RISK · −18%</span><span>CONF · 64%</span></div>
+        </div>
+
+        <div class="card incident">
+          <div class="cap"><span>INCIDENT CARD</span><span>I-009</span></div>
+          <div class="art"><div class="marker">OUTAGE</div></div>
+          <div class="body">
+            <div class="ttl">AUTH SERVICE OUTAGE</div>
+            <div class="desc">Severity: High · Affects Auth District · Memories at risk.</div>
+          </div>
+          <div class="stats"><span>SEV · HIGH</span><span>AGE · 14M</span></div>
+        </div>
+
+        <div class="card reference">
+          <div class="cap"><span>REFERENCE CARD</span><span>R-031</span></div>
+          <div class="art"><div class="marker">PLAYBOOK</div></div>
+          <div class="body">
+            <div class="ttl">ARCHITECTURE GUIDE</div>
+            <div class="desc">Follow coding standards and patterns. Benefit: +Trust on adherence.</div>
+          </div>
+          <div class="stats"><span>TYPE · GUIDE</span><span>+TRUST</span></div>
+        </div>
+
+        <div class="card skill">
+          <div class="cap"><span>SKILL UPDATE</span><span>SK-12</span></div>
+          <div class="art"><div class="marker">SKILL v2</div></div>
+          <div class="body">
+            <div class="ttl">MAGIC LINK FLOW v1.3</div>
+            <div class="desc">Adds error handling rule. Test coverage rule. Confidence: 92%.</div>
+          </div>
+          <div class="stats"><span>v1.2 → v1.3</span><span>NEEDS APPROVAL</span></div>
+        </div>
+      </div>
+
+      <!-- Standees -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">STANDEES · AGENT SPRITES (64×80)</h3>
+      <div class="panel"><div class="panel-body">
+        <div class="row wrap" style="gap:18px; align-items:flex-end">
+          <div class="center"><div class="standee frontend"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--d-frontend)"></div></div><div class="eyebrow" style="margin-top:6px">FRONTEND</div></div>
+          <div class="center"><div class="standee backend"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--d-infra)"></div></div><div class="eyebrow" style="margin-top:6px">BACKEND</div></div>
+          <div class="center"><div class="standee test"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--d-test)"></div></div><div class="eyebrow" style="margin-top:6px">TEST</div></div>
+          <div class="center"><div class="standee reviewer"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--memory)"></div></div><div class="eyebrow" style="margin-top:6px">REVIEWER</div></div>
+          <div class="center"><div class="standee planner"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--system)"></div></div><div class="eyebrow" style="margin-top:6px">PLANNER</div></div>
+          <div class="center"><div class="standee researcher"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--memory)"></div></div><div class="eyebrow" style="margin-top:6px">RESEARCHER</div></div>
+          <div class="center"><div class="standee operator"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div><div class="badge-pin" style="--accent:var(--risk)"></div></div><div class="eyebrow" style="margin-top:6px">OPERATOR</div></div>
+        </div>
+      </div></div>
+
+      <!-- Rooms -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">ROOMS · 128×128 BUILDING TILES</h3>
+      <div class="panel"><div class="panel-body">
+        <div class="row wrap" style="gap:18px; align-items:flex-end">
+          <div class="center"><div class="room-tile planning"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">PLANNING</div></div></div>
+          <div class="center"><div class="room-tile engineering"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">ENGINEERING</div></div></div>
+          <div class="center"><div class="room-tile review"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">REVIEW</div></div></div>
+          <div class="center"><div class="room-tile risk"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">RISK</div></div></div>
+          <div class="center"><div class="room-tile market"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">MARKET</div></div></div>
+          <div class="center"><div class="room-tile testing"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">TESTING</div></div></div>
+          <div class="center"><div class="room-tile vault"><div class="building"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="window w1"></div><div class="window w2"></div><div class="door"></div></div><div class="label">VAULT</div></div></div>
+        </div>
+      </div></div>
+
+      <!-- Buttons -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">BUTTONS &amp; CONTROLS</h3>
+      <div class="panel"><div class="panel-body">
+        <div class="row wrap" style="gap:10px">
+          <button class="btn primary">APPROVE SPEC</button>
+          <button class="btn warn">REQUEST CHANGES</button>
+          <button class="btn danger">REJECT</button>
+          <button class="btn">ASSIGN AGENT</button>
+          <button class="btn">CREATE SPEC</button>
+          <button class="btn">CREATE ADR</button>
+          <button class="btn">REVIEW ARTIFACT</button>
+          <button class="btn">INSTALL PACKAGE</button>
+          <button class="btn">EQUIP SKILL</button>
+          <button class="btn lg" style="background:#3a1a04; border-color:#8a4a14; color:var(--ultrawork)">▶ START ULTRAWORK</button>
+        </div>
+        <hr>
+        <div class="row wrap" style="gap:8px">
+          <span class="badge dot trust">TRUST</span>
+          <span class="badge dot risk">RISK</span>
+          <span class="badge dot warn">REVIEW PENDING</span>
+          <span class="badge dot system">RUNTIME ACTIVE</span>
+          <span class="badge dot memory">MEMORY CRYSTALLIZED</span>
+          <span class="badge">DRAFT</span>
+          <span class="badge">IN REVIEW</span>
+          <span class="badge">APPROVED</span>
+          <span class="badge">CHANGES REQ.</span>
+        </div>
+      </div></div>
+
+      <!-- Panels -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">PANELS</h3>
+      <div class="grid-3">
+        <div class="panel">
+          <div class="panel-head"><span class="num">F1</span><span class="ttl">SISYPHUS FEED</span><span class="sub">LIVE</span></div>
+          <div class="panel-body">
+            <ul class="list" style="font-size:12px">
+              <li><div><b>Spec approved</b><span>Magic Link Login · 2m ago</span></div></li>
+              <li><div><b>Risk detected</b><span>Auth District · 5m ago</span></div></li>
+              <li><div><b>Tests added</b><span>Auth Service · 10m ago</span></div></li>
+              <li><div><b>Review requested</b><span>PR #142 · 14m ago</span></div></li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="num">A1</span><span class="ttl">AGENT · ADA</span><span class="sub">FRONTEND</span></div>
+          <div class="panel-body">
+            <div class="row" style="gap:14px; align-items:flex-start">
+              <div class="standee frontend"><div class="body"><div class="head"></div><div class="torso"></div><div class="legs"></div></div></div>
+              <div style="flex:1">
+                <div class="pix" style="font-size:11px; color:var(--text-pixel)">ADA</div>
+                <div class="muted" style="font-size:12px">Trust 82% · Cautious · Medium autonomy</div>
+                <div style="height:6px; background:var(--bg-inset); border:1px solid var(--line-2); margin-top:8px; position:relative">
+                  <div style="width:82%; height:100%; background:var(--trust)"></div>
+                </div>
+                <div class="row" style="gap:6px; margin-top:10px">
+                  <span class="token sm trust">★</span>
+                  <span class="token sm memory">M</span>
+                  <span class="token sm coin">$</span>
+                  <span class="badge">WORKING</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="num">R1</span><span class="ttl">ROOM · PLANNING</span><span class="sub">3 / 6</span></div>
+          <div class="panel-body">
+            <div class="row" style="gap:12px">
+              <div class="room-tile planning" style="width:96px;height:96px"><div class="building" style="width:72px;height:64px;margin-bottom:14px"><div class="flag"></div><div class="roof"></div><div class="wall"></div><div class="door"></div></div></div>
+              <div style="flex:1">
+                <ul class="list" style="font-size:12px">
+                  <li><div><b>Spec Board</b><span>2 specs drafting</span></div></li>
+                  <li><div><b>ADR Board</b><span>1 ADR pending</span></div></li>
+                  <li><div><b>Risk Board</b><span>3 risks open</span></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tracks -->
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">TRACKS · BOARD METERS</h3>
+      <div class="panel"><div class="panel-body">
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:12px; row-gap:12px; align-items:center">
+          <div class="eyebrow">TRUST</div>
+          <div class="track">
+            <div class="cell on" style="--accent:var(--trust)">25</div>
+            <div class="cell on" style="--accent:var(--trust)">50</div>
+            <div class="cell on" style="--accent:var(--trust)">75</div>
+            <div class="cell cur on" style="--accent:var(--trust)">82</div>
+            <div class="cell">90</div>
+            <div class="cell">100</div>
+          </div>
+          <div class="eyebrow">RISK</div>
+          <div class="track">
+            <div class="cell on" style="--accent:var(--risk)">L</div>
+            <div class="cell cur on" style="--accent:var(--risk)">M</div>
+            <div class="cell">H</div>
+            <div class="cell">C</div>
+          </div>
+          <div class="eyebrow">TURN</div>
+          <div class="track">
+            <div class="cell on" style="--accent:var(--system)">1</div>
+            <div class="cell on" style="--accent:var(--system)">2</div>
+            <div class="cell cur on" style="--accent:var(--system)">3</div>
+            <div class="cell">4</div>
+            <div class="cell">5</div>
+            <div class="cell">6</div>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- ===================== 7. SCREENS ===================== -->
+    <section id="s7" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">07</span>
+        <div>
+          <h2>Screen Designs</h2>
+          <p class="sec-sub">Thirteen screens with purpose, components, primary actions, and empty/success/failure behavior.</p>
+        </div>
+      </div>
+
+      <!-- Screen 1: Onboarding -->
+      <div class="mock" style="margin-bottom:18px">
+        <div class="mock-bar"><span class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></span><span>01 · COMPANY ONBOARDING WIZARD</span><span class="right muted">3 of 5 steps</span></div>
+        <div class="mock-body">
+          <div class="grid-2">
+            <div>
+              <div class="eyebrow">STEP 3</div>
+              <div class="pix" style="font-size:18px; color:var(--text-pixel); margin:6px 0 10px">NAME YOUR COMPANY</div>
+              <div class="muted" style="max-width:50ch; margin-bottom:14px">Your company is the world your repo will live inside. Pick a name and a starting district focus. You can change it later.</div>
+              <div class="kv">
+                <div class="k">Company name</div><div class="mono">Stoneworks</div>
+                <div class="k">Starting region</div><div>Auth District · Frontend District</div>
+                <div class="k">Founder seats</div><div>3 (you + 2)</div>
+              </div>
+              <div class="row" style="margin-top:14px; gap:8px"><button class="btn">BACK</button><button class="btn primary">CONTINUE</button></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><span class="ttl">PROGRESS</span></div>
+              <div class="panel-body">
+                <ul class="list" style="font-size:12px">
+                  <li><div><b>✓ Connect repo</b><span>github.com/stoneworks/api</span></div></li>
+                  <li><div><b>✓ Map districts</b><span>5 detected</span></div></li>
+                  <li><div><b>● Name your company</b><span>You're here</span></div></li>
+                  <li><div><b>○ Invite founders</b><span>Optional</span></div></li>
+                  <li><div><b>○ Generate world</b><span>Final step</span></div></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="kv" style="margin-top:14px">
+            <div class="k">Empty state</div><div>"No repo connected" hero with two buttons: Connect GitHub · Paste URL.</div>
+            <div class="k">Success</div><div>Wizard transitions into a full-screen "world generation" animation (see screen 02).</div>
+            <div class="k">Failure</div><div>Inline red token at the failing step; retry button + log toggle.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: World generation -->
+      <div class="mock" style="margin-bottom:18px">
+        <div class="mock-bar"><span class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></span><span>02 · PROJECT WORLD GENERATION</span><span class="right muted">cartographer agent working</span></div>
+        <div class="mock-body" style="background:var(--bg-board); padding:0">
+          <div style="display:grid; grid-template-columns: 1fr 320px; min-height:280px;">
+            <div style="padding:18px; position:relative;">
+              <div class="eyebrow" style="color:var(--system)">CARTOGRAPHER · SCANNING REPO</div>
+              <div class="pix" style="font-size:14px; color:var(--text-pixel); margin:6px 0 14px">DISCOVERING DISTRICTS…</div>
+              <div class="grid-3" style="gap:10px">
+                <div class="region" style="aspect-ratio:1/1"><div class="grid"></div><div class="nameplate" style="background:var(--d-auth)20; color:var(--d-auth); border-color:var(--d-auth)">AUTH</div></div>
+                <div class="region" style="aspect-ratio:1/1"><div class="grid"></div><div class="nameplate" style="background:var(--d-frontend)20; color:var(--d-frontend); border-color:var(--d-frontend)">FRONTEND</div></div>
+                <div class="region" style="aspect-ratio:1/1"><div class="grid"></div><div class="nameplate" style="background:var(--d-data)20; color:var(--d-data); border-color:var(--d-data)">DATA</div></div>
+              </div>
+              <div class="track" style="margin-top:18px">
+                <div class="cell on" style="--accent:var(--system)">1</div>
+                <div class="cell on" style="--accent:var(--system)">2</div>
+                <div class="cell on" style="--accent:var(--system)">3</div>
+                <div class="cell on" style="--accent:var(--system)">4</div>
+                <div class="cell cur on" style="--accent:var(--system)">5</div>
+                <div class="cell">6</div>
+                <div class="cell">7</div>
+                <div class="cell">8</div>
+              </div>
+            </div>
+            <div style="background:var(--bg-panel); padding:14px; border-left:1px solid var(--line-2)">
+              <div class="eyebrow" style="color:var(--system)">SISYPHUS · LIVE LOG</div>
+              <pre class="code mono" style="margin-top:8px; font-size:11px">▸ Detected /auth/* → Auth District
+▸ Detected /web/* → Frontend
+▸ Detected /db/* → Data District
+▸ Risk: Auth has 0 tests
+▸ Suggesting Test Engineer</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 3: World Map -->
+      <div class="mock" style="margin-bottom:18px">
+        <div class="mock-bar"><span class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></span><span>03 · MAIN PROJECT WORLD MAP</span><span class="right muted">5 districts · 12 rooms · 7 agents</span></div>
+        <div class="mock-body" style="background:var(--bg-board); padding:0">
+          <div style="display:grid; grid-template-columns: 200px 1fr 280px; min-height:340px;">
+            <div style="padding:14px">
+              <div class="eyebrow">RISK / TRUST</div>
+              <div class="track" style="grid-auto-flow:row; gap:4px; margin-top:8px">
+                <div class="cell on" style="--accent:var(--risk)">CRIT</div>
+                <div class="cell cur on" style="--accent:var(--risk)">HIGH</div>
+                <div class="cell">MED</div>
+                <div class="cell">LOW</div>
+              </div>
+              <div class="eyebrow" style="margin-top:14px">DISTRICTS</div>
+              <ul class="list" style="font-size:12px">
+                <li><div><b style="color:var(--d-auth)">Auth</b><span>Risk High · 1 spec</span></div></li>
+                <li><div><b style="color:var(--d-frontend)">Frontend</b><span>Risk Low · 2 jobs</span></div></li>
+                <li><div><b style="color:var(--d-data)">Data</b><span>Risk Med · 1 ADR</span></div></li>
+                <li><div><b style="color:var(--d-test)">Testing</b><span>Conf 64%</span></div></li>
+                <li><div><b style="color:var(--d-infra)">Infra</b><span>Stable</span></div></li>
+              </ul>
+            </div>
+            <div style="position:relative; background:
+              radial-gradient(ellipse at 30% 30%, #1f2a4a 0%, transparent 40%),
+              radial-gradient(ellipse at 70% 70%, #2a1f3a 0%, transparent 40%),
+              repeating-linear-gradient(0deg, #ffffff05 0 1px, transparent 1px 16px),
+              repeating-linear-gradient(90deg, #ffffff05 0 1px, transparent 1px 16px),
+              var(--bg-board);
+              border-left:1px solid var(--line-2); border-right:1px solid var(--line-2);">
+              <div style="position:absolute; top:30px; left:60px;"><div class="region" style="width:140px;aspect-ratio:auto;height:90px"><div class="grid"></div><div class="nameplate" style="color:var(--d-auth); border-color:var(--d-auth)">AUTH · HIGH</div></div></div>
+              <div style="position:absolute; top:50px; right:80px;"><div class="region" style="width:140px;aspect-ratio:auto;height:90px"><div class="grid"></div><div class="nameplate" style="color:var(--d-data); border-color:var(--d-data)">DATA · MED</div></div></div>
+              <div style="position:absolute; bottom:30px; left:90px;"><div class="region" style="width:140px;aspect-ratio:auto;height:90px"><div class="grid"></div><div class="nameplate" style="color:var(--d-frontend); border-color:var(--d-frontend)">FRONTEND</div></div></div>
+              <div style="position:absolute; bottom:50px; right:60px;"><div class="region" style="width:140px;aspect-ratio:auto;height:90px"><div class="grid"></div><div class="nameplate" style="color:var(--d-test); border-color:var(--d-test)">TESTING</div></div></div>
+              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%)"><div class="region" style="width:120px;aspect-ratio:auto;height:80px; box-shadow: 0 0 0 2px var(--frame-gold), var(--shadow-raised)"><div class="grid"></div><div class="nameplate" style="color:var(--d-hq); border-color:var(--d-hq)">HQ · SISYPHUS OS</div></div></div>
+            </div>
+            <div style="padding:14px">
+              <div class="eyebrow" style="color:var(--system)">SISYPHUS</div>
+              <div style="background:var(--bg-inset); border:1px solid var(--line-2); padding:10px; margin-top:8px">
+                <div class="pix" style="font-size:10px; color:var(--system)">NEEDS ATTENTION</div>
+                <div style="font-size:12px; color:var(--text-md); margin-top:6px">Auth District has high risk and one open spec. Recommend approving spec or assigning a reviewer.</div>
+                <div class="row" style="gap:6px; margin-top:10px">
+                  <button class="btn primary" style="padding:6px 8px; font-size:9px">APPROVE</button>
+                  <button class="btn warn" style="padding:6px 8px; font-size:9px">REVIEW</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="kv">
+          <div class="k">Primary purpose</div><div>Persistent home view. Convey project health at a glance and route to any room in one click.</div>
+          <div class="k">Multiplayer</div><div>Other player cursors as small standees with name pills. Vote-pending rooms pulse gold.</div>
+          <div class="k">Empty</div><div>Pre-generation: a parchment-tone "world not yet generated" with a single CTA.</div>
+        </div>
+      </div>
+
+      <!-- Compact descriptions for remaining screens -->
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><span class="num">04</span><span class="ttl">PLANNING ROOM · SPEC BOARD</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">A felt board of spec cards, drawn from a deck on the right. Drag to columns: Drafting → Ready → In Review → Approved. Cards expand to a full editor (right rail). Multiplayer: per-player turn marker on the deck.</p><div class="row wrap" style="gap:8px; margin-top:10px"><span class="badge">DRAFT</span><span class="badge warn">IN REVIEW</span><span class="badge trust">APPROVED</span></div></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">05</span><span class="ttl">SPEC APPROVAL</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Modal centered on the spec card. Token rail under the card: drop Approve / Changes / Reject. Vote tally chips show who voted. Failure: spec returns to "Changes Requested" with reviewer notes attached.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">06</span><span class="ttl">ENGINEERING ROOM · ACTIVE RUNS</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">List of active jobs with agent standees, progress bars, and live runtime status (pulsing cyan dot). Side panel streams agent telemetry. Buttons: Pause · Detach · Open Bundle.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">07</span><span class="ttl">REVIEW ROOM · BUNDLE</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Three columns: Files / Diff / Summary. Right rail: review actions stacked. Reviewer chips show progress (e.g. 3/4). Risk delta and confidence shown as tokens.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">08</span><span class="ttl">AGENT PROFILE &amp; LOADOUT</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Standee + identity. Tabs: Skills / Tools / MCPs / Memory / History. Drag-and-drop loadout grid. Trust + autonomy meters. Copy loadout · Create template.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">09</span><span class="ttl">MARKETPLACE</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Categories left, package cards center, install drawer right. Each card shows author, rating, install count. Empty: "No packs installed — try Spec-First Pack."</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">10</span><span class="ttl">MEMORY &amp; LEARNING</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Memories as purple crystal tokens on parchment shelves. Tabs: Memories · Lessons · Decisions. Skill-update proposals appear as cards with diff vs. previous version.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">11</span><span class="ttl">RISK ROOM · POLICIES</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Heatmap of districts (red→green). Top risks list with mitigations. Policies tab: editable rules (e.g. "Auth changes require 2 reviewers"). Incidents tab: incident cards.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">12</span><span class="ttl">FAILURE / INCIDENT</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Full-bleed red overlay with incident card front and center. Timeline of agent actions. Buttons: Acknowledge · Roll Back · Open Postmortem. Memories at risk pinned at top.</p></div></div>
+        <div class="panel"><div class="panel-head"><span class="num">13</span><span class="ttl">ULTRAWORK PLANNING</span></div><div class="panel-body"><p style="margin:0; color:var(--text-md); font-size:13px">Operation card: objective, milestones, time-box, compute budget. Gates: Spec ✓ Architecture ✓ Tests ✓. Big orange "▶ Start Ultrawork" only enabled when gates green.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ===================== 8. ASSET GENERATION ===================== -->
+    <section id="s8" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">08</span>
+        <div>
+          <h2>Asset Generation System</h2>
+          <p class="sec-sub">Fixed grids, palette slots, and naming so an agent can produce a new tile/icon/standee that drops in with no manual touch-up.</p>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Icon — small</div><div>16×16 px · 1× sprite · transparent PNG · ≤ 4 colors from one ramp.</div>
+        <div class="k">Icon — large</div><div>32×32 px · 1× sprite · transparent PNG · ≤ 6 colors.</div>
+        <div class="k">Standee</div><div>64×80 px · base 64×64 sprite + 16px shadow strip · 6-color palette: skin, hair, shirt, pants, accent, outline.</div>
+        <div class="k">Room tile</div><div>128×128 px · footprint 96×88 with 32px ground strip · roof, wall, door, window slots; flag &amp; accent slot for status.</div>
+        <div class="k">Region tile</div><div>256×192 px · base + nameplate slot + 4 connection anchors (N/E/S/W).</div>
+        <div class="k">Card frame</div><div>9-slice PNG: corners 12×12, edges 4px, body parchment-100. One frame, six cap colors.</div>
+        <div class="k">Token</div><div>44×44 px circle on dark · 28×28 small variant. Drawn from 9 palette slots.</div>
+        <div class="k">UI panel</div><div>9-slice navy frame: 8px corners, 1px hairline edges, 2px inner highlight. One panel, three border weights.</div>
+      </div>
+
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">NAMING CONVENTION</h3>
+      <pre class="code mono" style="font-size:12px">/assets/
+├── icon/16/{name}.png             # icon-16-spec.png, icon-16-risk.png
+├── icon/32/{name}.png
+├── standee/64/{role}-{variant}.png # standee-64-frontend-01.png
+├── room/128/{type}-{state}.png    # room-128-planning-idle.png
+├── region/256/{district}.png      # region-256-auth.png
+├── card/frame/{type}.9.png        # card-frame-spec.9.png
+├── token/44/{kind}.png            # token-44-approve.png
+├── ui/panel/{weight}.9.png        # ui-panel-1.9.png
+└── palette/{name}.gpl             # palette-base.gpl, palette-auth.gpl
+</pre>
+
+      <h3 class="pix" style="font-size:13px; color:var(--budget); margin: 24px 0 10px;">PALETTE SLOTS &amp; STATUS RECOLORING</h3>
+      <div class="kv">
+        <div class="k">Layering rules</div><div>Each sprite has these layers, in order: shadow → base → detail → outline → status accent. Status is applied by swapping the accent layer color only — never the base.</div>
+        <div class="k">Variants</div><div>Generate all variants by recoloring slots 1–6. Idle / hover / selected / working / blocked produced from the same base sprite.</div>
+        <div class="k">Export</div><div>PNG, indexed-color preferred, no anti-aliasing, transparent background. Companion `.json` lists palette slot mapping.</div>
+        <div class="k">Validation</div><div>An agent producing a tile must pass: correct dimensions, ≤ N colors, all colors present in declared palette, transparent margin pixels not painted.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 9. REACT + PIXIJS ===================== -->
+    <section id="s9" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">09</span>
+        <div>
+          <h2>React + PixiJS Implementation</h2>
+          <p class="sec-sub">Pixi owns the world canvas and animations. React owns forms, panels, and any text-heavy surface.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><span class="ttl">PIXI · CANVAS LAYER</span></div>
+          <div class="panel-body">
+            <ul class="list">
+              <li><div><b>World map</b><span>Region tiles, connections, zoom/pan, parallax.</span></div></li>
+              <li><div><b>Room tiles</b><span>128px buildings, hover lift, selected glow.</span></div></li>
+              <li><div><b>Agents</b><span>Standees with idle bob, walk, work animations.</span></div></li>
+              <li><div><b>Tokens on board</b><span>Approval/risk tokens placed on cards/cells.</span></div></li>
+              <li><div><b>Animations</b><span>Memory crystallization, ultrawork burst, incident shake.</span></div></li>
+              <li><div><b>Annotations</b><span>Sisyphus speech bubbles and pin markers.</span></div></li>
+            </ul>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="ttl">REACT · DOM OVERLAY</span></div>
+          <div class="panel-body">
+            <ul class="list">
+              <li><div><b>App shell</b><span>Topbar, rails, tray, modals.</span></div></li>
+              <li><div><b>Forms</b><span>Spec editor, ADR editor, agent loadout.</span></div></li>
+              <li><div><b>Panels</b><span>Sisyphus feed, advisor, agent panel, room panel.</span></div></li>
+              <li><div><b>Review</b><span>Diff viewer, file tree, comments — all DOM.</span></div></li>
+              <li><div><b>Marketplace</b><span>Cards in HTML, install drawer, search.</span></div></li>
+              <li><div><b>Memory views</b><span>Lists, filters, detail panes.</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="kv" style="margin-top:18px">
+        <div class="k">Map structure</div><div>Pixi `Container` per district → child `Container`s for rooms → sprite per agent. Cull off-screen at low zoom.</div>
+        <div class="k">Zoom levels</div><div>Z0 world (regions only) · Z1 districts (rooms) · Z2 rooms (agents + standees) · Z3 inside-room (boards/cards as DOM modal).</div>
+        <div class="k">Hover/click</div><div>Pixi emits hit events; React renders the tooltip / nameplate as an absolutely-positioned DOM element above the canvas.</div>
+        <div class="k">Multiplayer presence</div><div>Each remote user is a small standee with name pill at their last-known coordinate. Cursors throttled to 10Hz.</div>
+        <div class="k">Text rule</div><div>Any string longer than a 3-word label is DOM. Pixi gets pixel labels only (BitmapText with Press Start 2P).</div>
+        <div class="k">Forms in Pixi?</div><div>Never. The moment a screen needs an input, table, or scroll list, it's React.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 10. INTERACTION STATES ===================== -->
+    <section id="s10" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">10</span>
+        <div>
+          <h2>Interaction States</h2>
+          <p class="sec-sub">Every interactive element has these visual states. Apply via outline + token, never by repainting the base sprite.</p>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Idle</div><div>Default appearance. No outline.</div>
+        <div class="k">Hover</div><div>1px gold outline, +2px lift via shadow.</div>
+        <div class="k">Selected</div><div>2px gold outline, persists.</div>
+        <div class="k">Active / Working</div><div>Cyan dot pulse on the element corner.</div>
+        <div class="k">Blocked</div><div>Diagonal stripe overlay 25% opacity, cursor: not-allowed.</div>
+        <div class="k">Needs approval</div><div>Gold dashed outline + small "approve" token in upper-right.</div>
+        <div class="k">In review</div><div>Yellow tint band along the bottom edge.</div>
+        <div class="k">Approved</div><div>Green checkmark token in upper-right.</div>
+        <div class="k">Rejected</div><div>Red X token + 30% desaturation on base sprite.</div>
+        <div class="k">Changes requested</div><div>Yellow ~ token + striped yellow band.</div>
+        <div class="k">Failed / Incident</div><div>Red outline shake (8px, 2 cycles) + incident token attached.</div>
+        <div class="k">Ultrawork active</div><div>Orange pulsing border + "▶ ULTRAWORK" eyebrow on parent panel.</div>
+        <div class="k">Risk increasing</div><div>Risk track cell lights red and pulses once.</div>
+        <div class="k">Trust increasing</div><div>Trust track cell lights green; small +N floats up and fades.</div>
+        <div class="k">Memory created</div><div>Purple crystal sprite spawns, drifts to vault icon, snaps in.</div>
+        <div class="k">Skill update proposed</div><div>Skill card flips with chime; lands on Memory &amp; Learning panel awaiting approval.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 11. MOTION ===================== -->
+    <section id="s11" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">11</span>
+        <div>
+          <h2>Motion &amp; Animation</h2>
+          <p class="sec-sub">Short, snappy, pixel-stepped. No long eases on critical numerics. Reduced-motion users get instant transitions.</p>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Agent walk</div><div>2-frame loop, 6 fps, 16-pixel step. Path interpolation linear; sprite frames stepped.</div>
+        <div class="k">Token placement</div><div>120ms drop with 1 bounce. 8px overshoot, settle.</div>
+        <div class="k">Card draw</div><div>200ms slide-up + tilt 4°, then settle. Reveal flips at 100ms.</div>
+        <div class="k">Approval vote</div><div>Token snaps to slot in 80ms. Tally pip increments with a tick.</div>
+        <div class="k">Risk alert</div><div>Risk token shake 8px ×2; district outline pulses red for 1.5s.</div>
+        <div class="k">Trust increase</div><div>+N floater, 600ms upward fade. Track cell paint-fills 240ms.</div>
+        <div class="k">Memory crystallization</div><div>1.2s spawn → drift to vault. Sparkle particles, 6 max, pixel-snapped.</div>
+        <div class="k">Skill update</div><div>Card flip 320ms; chime if sound enabled; lands on Memory panel.</div>
+        <div class="k">Incident escalation</div><div>Screen-edge red vignette 200ms in / 600ms hold / 400ms out. Single shake.</div>
+        <div class="k">Sisyphus annotation</div><div>Speech-bubble pop 160ms with type-on caret 30ms/char up to 80 chars.</div>
+        <div class="k">World upgrade/decay</div><div>Tile cross-fade 400ms between idle / upgraded / decayed variants.</div>
+        <div class="k">Curves</div><div>cubic-bezier(.2,.7,.1,1) for UI; stepped() for sprites. Default duration 160ms.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 12. ACCESSIBILITY ===================== -->
+    <section id="s12" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">12</span>
+        <div>
+          <h2>Accessibility &amp; Readability</h2>
+          <p class="sec-sub">Pixel aesthetic must not compromise comprehension. Color is never the sole signal.</p>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Min text size</div><div>Body 13px / Pixel labels 9px / Mono 12px. Never smaller.</div>
+        <div class="k">Contrast</div><div>4.5:1 for body on bg-panel; 3:1 for pixel labels (treated as large text).</div>
+        <div class="k">Colorblind safety</div><div>Risk = red + ! glyph. Trust = green + ★. Approval = green + ✓. Reject = red + ✗. Always pair color with shape.</div>
+        <div class="k">Icon + text</div><div>All status tokens carry a glyph. Never icon-only at sizes ≥ 28px.</div>
+        <div class="k">Reduced motion</div><div>`prefers-reduced-motion` disables shake, particles, and card flips. Token snaps replace bounces.</div>
+        <div class="k">Keyboard</div><div>Full panel-and-tray nav with Tab; ←/→ moves between cards; Enter approves; Esc closes modal. Visible focus ring: 2px gold.</div>
+        <div class="k">Screen reader</div><div>All Pixi-rendered states mirrored in a hidden DOM live region. Cards expose `role=button`, tokens `aria-pressed`.</div>
+        <div class="k">Pixel font in body</div><div>Forbidden. Auto-replace any pixel-font paragraph with body sans in user CSS overrides.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 13. THEMING ===================== -->
+    <section id="s13" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">13</span>
+        <div>
+          <h2>Theming &amp; Future Skins</h2>
+          <p class="sec-sub">v1 ships professional pixel + tabletop. Future skins swap palette slots and frame ornaments without changing layout.</p>
+        </div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Sci-fi skin</div><div>Steel/cyan palette, hex-grid maps, holographic frames. Same components, swap roof/wall sprites.</div>
+        <div class="k">Fantasy skin</div><div>Wood and brass, hand-lettered card caps, parchment intensified. Reserved — do not enable in v1.</div>
+        <div class="k">Enterprise clean</div><div>Drop pixel sprites; keep card frames flat. Pixel font reserved for KPIs only. For audited corporate buyers.</div>
+        <div class="k">Cozy office</div><div>Warmer tones, plant tiles in rooms, softer trust colors. For long-running marathons.</div>
+        <div class="k">Dark ops / cyber</div><div>Black + monochrome cyan, glitched outlines on incidents. Highest visual cost — gated.</div>
+        <div class="k">Skin packaging</div><div>A skin is a directory: palette.gpl + sprites/ + ornaments.svg + theme.json. Loaded at runtime.</div>
+      </div>
+    </section>
+
+    <!-- ===================== 14. DELIVERABLES ===================== -->
+    <section id="s14" class="doc-section">
+      <div class="sec-head">
+        <span class="sec-num">14</span>
+        <div>
+          <h2>Deliverables &amp; QA</h2>
+          <p class="sec-sub">Build order and a one-glance visual QA checklist.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head"><span class="ttl">FIRST 12 COMPONENTS TO BUILD</span></div>
+          <div class="panel-body">
+            <ul class="list" style="font-size:13px">
+              <li><div><b>1 · Tokens (9 kinds)</b><span>Atom of the whole game layer.</span></div></li>
+              <li><div><b>2 · Card frame (9-slice)</b><span>Spec/Job/Artifact/Incident/Reference/Skill share.</span></div></li>
+              <li><div><b>3 · UI panel (9-slice)</b><span>Three border weights.</span></div></li>
+              <li><div><b>4 · Topbar + resource pills</b><span>Trust/Risk/Budget/Compute.</span></div></li>
+              <li><div><b>5 · Standee base + 7 roles</b><span>Recolor variants only.</span></div></li>
+              <li><div><b>6 · Room tile (1 type, 3 states)</b><span>Idle / hover / selected, then duplicate to 7 rooms.</span></div></li>
+              <li><div><b>7 · Region tile</b><span>Drives the world map.</span></div></li>
+              <li><div><b>8 · Sisyphus advisor block</b><span>Single high-leverage panel.</span></div></li>
+              <li><div><b>9 · Approval modal</b><span>Card + token rail + vote tally.</span></div></li>
+              <li><div><b>10 · Diff/review pane</b><span>The most-used review surface.</span></div></li>
+              <li><div><b>11 · Track / progress meter</b><span>Reusable across many panels.</span></div></li>
+              <li><div><b>12 · Action tray</b><span>Buttons + turn track.</span></div></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="ttl">VISUAL QA CHECKLIST</span></div>
+          <div class="panel-body">
+            <ul class="list" style="font-size:13px">
+              <li><div><b>Pixel grid</b><span>Sprites land on whole-pixel positions; no half-pixel blur.</span></div></li>
+              <li><div><b>One pixel font, one body font, one mono</b><span>Three families max on any screen.</span></div></li>
+              <li><div><b>Status reads without color</b><span>Every status has a glyph or shape.</span></div></li>
+              <li><div><b>No body text in pixel font</b><span>Headings/labels/KPIs only.</span></div></li>
+              <li><div><b>Cards on parchment, panels on dark</b><span>Don't mix.</span></div></li>
+              <li><div><b>Trust/Risk visible</b><span>Both readable on every screen without scrolling.</span></div></li>
+              <li><div><b>Multiplayer presence visible</b><span>Other players show as small standees / cursors.</span></div></li>
+              <li><div><b>Reduced motion respected</b><span>No shake/particles when set.</span></div></li>
+              <li><div><b>Keyboard reach</b><span>Every action reachable without mouse.</span></div></li>
+              <li><div><b>Empty/error/success</b><span>Each screen has all three.</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero bracket" style="margin-top:32px">
+        <div>
+          <div class="eyebrow">END OF DESIGN SYSTEM v1.0</div>
+          <div class="pix" style="font-size:16px; color:var(--text-pixel); margin-top:6px">BUILT FOR AI-GENERATED ASSETS · MODULAR · PLAYABLE</div>
+          <p class="hero-blurb">Next: assemble the first vertical slice — World Map → Planning Room → Spec Approval → Engineering Run → Review → Memory crystallization. Every other surface is a recombination of components defined here.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="v" style="color:var(--trust)">v1.0</div><div class="l">Ready</div></div>
+        </div>
+        <span class="bl"></span><span class="br"></span>
+      </div>
+    </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- React + Tweaks panel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<div id="tweaks-root"></div>
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "era": "tabletop",
+  "purity": 1,
+  "density": "regular"
+}/*EDITMODE-END*/;
+
+function applyTweaks(t) {
+  const html = document.documentElement;
+  if (t.era === "tabletop") html.removeAttribute("data-era");
+  else html.setAttribute("data-era", t.era);
+  html.setAttribute("data-purity", String(t.purity));
+  if (t.density === "regular") html.removeAttribute("data-density");
+  else html.setAttribute("data-density", t.density);
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  React.useEffect(() => { applyTweaks(t); }, [t.era, t.purity, t.density]);
+
+  const purityLabel = ["Crisp UI", "Lightly pixelated", "Fully pixelated"][t.purity] || "—";
+
+  return (
+    <TweaksPanel>
+      <TweakSection label="Aesthetic Era" hint="Repaints the entire palette, frames, and surfaces. Same components, different world." />
+      <TweakRadio
+        label="Era"
+        value={t.era}
+        options={[
+          { value: "tabletop", label: "Tabletop" },
+          { value: "holo",     label: "Holo" },
+          { value: "cozy",     label: "Cozy" },
+          { value: "darkops",  label: "Dark Ops" },
+        ]}
+        onChange={(v) => setTweak("era", v)}
+      />
+
+      <TweakSection label="Pixel Purity" hint="How committed to the pixel-art aesthetic. Crisp keeps body text smooth; Fully pixelated commits everything." />
+      <TweakSlider
+        label={purityLabel}
+        value={t.purity}
+        min={0} max={2} step={1}
+        onChange={(v) => setTweak("purity", v)}
+      />
+
+      <TweakSection label="Density" hint="Reshapes the doc from a leisurely codex to a dense reference sheet." />
+      <TweakRadio
+        label="Spacing"
+        value={t.density}
+        options={[
+          { value: "comfy",   label: "Codex" },
+          { value: "regular", label: "Default" },
+          { value: "dense",   label: "Boardroom" },
+        ]}
+        onChange={(v) => setTweak("density", v)}
+      />
+    </TweaksPanel>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("tweaks-root")).render(<App />);
+</script>
+
+</body></html>
