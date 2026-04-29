@@ -49,4 +49,11 @@ button { cursor: pointer; }
 .diff-code { max-height: 360px; }
 .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .notice { border: 1px solid var(--system-dk); background: #04222a; color: var(--system); padding: 10px 12px; font-family: var(--f-mono); font-size: 12px; }
+.repo-scan-panel { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-2); display: grid; gap: 10px; }
+.panel-head.inline { padding: 0; border: 0; background: transparent; }
+.repo-scan-count { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; padding: 10px; background: var(--bg-inset); border: 1px solid var(--line-1); }
+.repo-scan-count span { font-family: var(--f-pixel); color: var(--system); font-size: 18px; }
+.repo-scan-count b { color: var(--text-pixel); font-size: 12px; }
+.list.compact { margin-top: 0; }
+.notice.mini { padding: 7px 9px; font-size: 11px; }
 @media (max-width: 1100px) { .app-grid { grid-template-columns: 1fr; } .nav-rail { border-right: 0; border-bottom: 1px solid var(--line-2); display: flex; overflow-x: auto; gap: 8px; } .nav-btn { width: auto; white-space: nowrap; } .board-layout, .detail-grid { grid-template-columns: 1fr; } .status-strip { display: none; } }
