@@ -11,3 +11,7 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 tsconfig.tsbuildinfo
+
+
+# Convex
+convex/_generated

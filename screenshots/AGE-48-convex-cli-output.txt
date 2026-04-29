@@ -1,0 +1,58 @@
+>>> Run npx convex dev below; pick account, org, and create the new project. <<<
+✔ What would you like to configure? create a new project
+✔ Team: AgenticEngineering (agenticengineering)
+✔ Project name: code-colony-convex
+✔ Use cloud or local dev deployment? For more see 
+https://docs.convex.dev/cli/local-deployments cloud 
+deployment
+✔ Created project code-colony-convex in team agenticengineering, manage it at https://dashboard.convex.dev/t/agenticengineering/code-colony-convex
+✔ Set up Convex AI files? (guidelines, AGENTS.md, agent 
+skills) Yes
+✔ /Users/eduardojaviergarcialopez/AgenticEngineering/Code Colony/code-colony-convex/convex/_generated/ai/guidelines.md written
+✔ AGENTS.md written
+✔ CLAUDE.md written
+Installing Convex agent skills...
+✔ Skills installed
+✔ Provisioned a dev deployment and saved its:
+    name as CONVEX_DEPLOYMENT
+    client URL as NEXT_PUBLIC_CONVEX_URL
+    HTTP actions URL as NEXT_PUBLIC_CONVEX_SITE_URL
+ to .env.local
+
+Write your Convex functions in convex/
+Give us feedback at https://convex.dev/community or support@convex.dev
+View the Convex dashboard at https://dashboard.convex.dev/d/deafening-puma-904
+
+✖ TypeScript typecheck via `tsc` failed.
+To ignore failing typecheck, use `--typecheck=disable`.
+convex/seed.ts:21:22 - error TS2345: Argument of type '"by_seed_id"' is not assignable to parameter of type '"by_id" | "by_creation_time"'.
+
+21           .withIndex("by_seed_id", (q) => q.eq("seedId", doc.seedId))
+                        ~~~~~~~~~~~~
+convex/seed.ts:21:48 - error TS2345: Argument of type '"seedId"' is not assignable to parameter of type '"_creationTime" | "_id"'.
+
+21           .withIndex("by_seed_id", (q) => q.eq("seedId", doc.seedId))
+                                                  ~~~~~~~~
+
+convex/seed.ts:24:46 - error TS2345: Argument of type 'T' is not assignable to parameter of type '{ seedId: string; name: string; purpose: string; reputation: number; budget: number; trustLevel: number; _creationTime?: number | undefined; _id?: Id<"companies"> | Id<"projectWorlds"> | ... 19 more ... | undefined; } | ... 19 more ... | { ...; }'.
+  Type '{ seedId: string; }' is not assignable to type '{ seedId: string; name: string; purpose: string; reputation: number; budget: number; trustLevel: number; _creationTime?: number | undefined; _id?: Id<"companies"> | Id<"projectWorlds"> | ... 19 more ... | undefined; } | ... 19 more ... | { ...; }'.
+    Type '{ seedId: string; }' is missing the following properties from type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; _creationTime?: number | undefined; _id?: Id<...> | ... 20 more ... | undefined; }': title, status, source, externalRef, and 2 more.
+      Type 'T' is not assignable to type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; _creationTime?: number | undefined; _id?: Id<...> | ... 20 more ... | undefined; }'.
+        Type '{ seedId: string; }' is missing the following properties from type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; _creationTime?: number | undefined; _id?: Id<...> | ... 20 more ... | undefined; }': title, status, source, externalRef, and 2 more.
+
+24           await ctx.db.replace(existing._id, doc);
+                                                ~~~
+
+convex/seed.ts:26:38 - error TS2345: Argument of type 'T' is not assignable to parameter of type '{ seedId: string; name: string; purpose: string; reputation: number; budget: number; trustLevel: number; } | { seedId: string; name: string; companySeedId: string; domain: "software" | "mixed"; repoUrl: string; mapStatus: "approved" | ... 1 more ... | "active"; slogan: string; } | ... 18 more ... | { ...; }'.
+  Type '{ seedId: string; }' is not assignable to type '{ seedId: string; name: string; purpose: string; reputation: number; budget: number; trustLevel: number; } | { seedId: string; name: string; companySeedId: string; domain: "software" | "mixed"; repoUrl: string; mapStatus: "approved" | ... 1 more ... | "active"; slogan: string; } | ... 18 more ... | { ...; }'.
+    Type '{ seedId: string; }' is missing the following properties from type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; }': title, status, source, externalRef, and 2 m
+ore.
+      Type 'T' is not assignable to type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; }'.
+        Type '{ seedId: string; }' is missing the following properties from type '{ ingestedJobSeedId?: string | undefined; seedId: string; title: string; status: "rejected" | "new" | "ingested"; source: "linear" | "github" | "manual"; externalRef: string; summary: string; suggestedRegionSeedId: string; }': title, status, source, externalRef, and 2 more.
+
+26           await ctx.db.insert(table, doc);
+                                        ~~~
+
+Found 4 errors in the same file, starting at: convex/seed.ts:21
+✔ 03:29:28 Convex functions ready! (1.41s)
+✔ 03:33:52 Convex functions ready! (1.46s)
