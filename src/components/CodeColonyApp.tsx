@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { approveArtifactLearning, demoData, moveJob, voteOnApproval } from "@/domain/demoData";
@@ -19,7 +20,7 @@ export function CodeColonyApp() {
   return (
     <div className="colony-shell">
       <header className="topbar">
-        <div className="logo-mark">CC</div><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
+        <Image className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} priority /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
         <div className="status-strip"><Status label="Trust" value={`${stats.trustLevel}%`} tone="trust" /><Status label="Risk" value="Med" tone="risk" /><Status label="Budget" value={`$${Math.round(stats.budget / 1000)}k`} tone="budget" /><Status label="Compute" value="184s" tone="compute" /><Status label="Week" value="01" tone="system" /><Status label="Turn" value="03" tone="ultrawork" /></div>
       </header>
       <div className="app-grid">
