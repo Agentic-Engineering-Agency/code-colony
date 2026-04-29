@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
 import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, runSimulatedRuntimePreview, type RuntimeWorkerRequest, type RuntimeWorkerResult } from "@/domain/runtime";
@@ -22,7 +22,7 @@ export function CodeColonyApp() {
     <div className="colony-shell">
       <header className="topbar">
         <Image className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} priority /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
-        <div className="status-strip"><Status label="Trust" value={`${stats.trustLevel}%`} tone="trust" /><Status label="Risk" value="Med" tone="risk" /><Status label="Budget" value={`$${Math.round(stats.budget / 1000)}k`} tone="budget" /><Status label="Compute" value="184s" tone="compute" /><Status label="Week" value="01" tone="system" /><Status label="Turn" value="03" tone="ultrawork" /></div>
+        <HealthStrip fallback={stats} />
       </header>
       <div className="app-grid">
         <nav className="nav-rail">{screens.map((item) => <button key={item.id} className={`btn nav-btn ${screen === item.id ? "active" : ""}`} onClick={() => setScreen(item.id)}>{item.label}</button>)}</nav>
@@ -187,6 +187,28 @@ function RuntimeScreen({ data, onRerun }: { data: DemoData; onRerun: () => void 
 function ArtifactScreen({ data, onApproveLearning }: { data: DemoData; onApproveLearning: () => void }) { const artifact = data.artifacts[0]; return <section className="detail-grid"><div className="panel"><div className="panel-head"><span className="ttl">Artifact Bundle</span><span className="sub">{artifact.status}</span></div><div className="panel-body"><h3 className="pix" style={{ fontSize: 13 }}>{artifact.title}</h3><ul className="list">{artifact.changedFiles.map((file) => <li key={file}><div><b>{file}</b><span>Changed in simulated patch preview</span></div></li>)}</ul><div className="action-row"><button className="btn primary" onClick={onApproveLearning}>Approve Learning Objects</button><button className="btn warn">Request Changes</button><button className="btn danger">Reject</button></div></div></div><div className="panel"><div className="panel-head"><span className="ttl">Reviewer Verdicts</span></div><div className="panel-body"><ul className="list">{artifact.reviewerVerdicts.map((verdict) => <li key={verdict.reviewer}><div><b>{verdict.reviewer}: {verdict.verdict}</b><span>{verdict.note}</span></div></li>)}</ul></div></div></section>; }
 function MemoryScreen({ data }: { data: DemoData }) { return <section className="memory-grid">{data.memories.map((memory) => <div className="panel" key={memory.id}><div className="panel-head"><span className="ttl">{memory.scope} · {memory.kind}</span><span className="sub">{memory.status}</span></div><div className="panel-body"><p>{memory.content}</p><Meter value={Math.round(memory.confidence * 100)} tone="memory" /><p className="muted">Provenance: {memory.provenanceMode}</p></div></div>)}{data.skillProposals.map((skill) => <div className="card skill" key={skill.id}><div className="cap"><span>SKILL UPDATE</span><span>{skill.approvalStatus}</span></div><div className="body"><div className="ttl">{skill.skillId}</div><p className="desc">{skill.diffSummary}</p></div><div className="stats"><span>Tier {skill.approvalTier}</span><span>{skill.kind}</span></div></div>)}</section>; }
 function MarketplaceScreen({ data }: { data: DemoData }) { return <section className="market-grid">{data.marketplace.map((pkg) => <div className="card reference" style={{ width: "100%" }} key={pkg.id}><div className="cap"><span>{pkg.kind}</span><span>{pkg.version}</span></div><div className="body"><div className="ttl">{pkg.name}</div><p className="desc">{pkg.description}</p><div className="tag-row"><span className="badge trust">{pkg.trustTier}</span><span className="badge system">{pkg.installScope}</span></div><button className="btn primary" style={{ marginTop: 10 }}>Install / Equip</button></div></div>)}</section>; }
+
+function HealthStrip({ fallback }: { fallback: { trustLevel: number; budget: number } }) {
+  type Probes = { gh: { available: boolean; detail?: string }; git: { available: boolean; detail?: string }; runtime: { available: boolean; detail?: string } };
+  const [probes, setProbes] = useState<Probes | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/health")
+      .then(async (response) => { if (!response.ok) throw new Error(`health ${response.status}`); return response.json() as Promise<{ probes: Probes }>; })
+      .then((payload) => { if (!cancelled) setProbes(payload.probes); })
+      .catch((err) => { if (!cancelled) setError(err instanceof Error ? err.message : String(err)); });
+    return () => { cancelled = true; };
+  }, []);
+  return <div className="status-strip">
+    <Status label="Trust" value={`${fallback.trustLevel}%`} tone="trust" />
+    <Status label="Risk" value="Med" tone="risk" />
+    <Status label="Budget" value={`$${Math.round(fallback.budget / 1000)}k`} tone="budget" />
+    <Status label="gh" value={probes ? (probes.gh.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.gh.available ? "trust" : "risk"} />
+    <Status label="git" value={probes ? (probes.git.available ? "on" : "off") : (error ? "err" : "…")} tone={probes?.git.available ? "trust" : "risk"} />
+    <Status label="rt" value={probes ? (probes.runtime.available ? "sim" : "off") : (error ? "err" : "…")} tone={probes?.runtime.available ? "system" : "risk"} />
+  </div>;
+}
 
 function Status({ label, value, tone }: { label: string; value: string; tone: string }) { return <span className="status-chip"><span className={`token sm ${tone === "budget" ? "coin" : tone}`}>{label[0]}</span>{label} <b>{value}</b></span>; }
 function RoomMini({ room }: { room: Room }) { return <div className="room-mini" title={room.purpose}>{room.name.split(" ")[0]}</div>; }
