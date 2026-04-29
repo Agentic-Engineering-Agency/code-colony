@@ -3,9 +3,10 @@
  * Durable Object + Container image) once PR #77 lands.
  *
  * Per-PR previews use the stage suffix as a name prefix so the runner does
- * not collide with prod. The HMAC secret is read from the secrets stack;
- * the Worker only reaches the runtime if `secrets:SANDBOX_HMAC_KEY` exists.
+ * not collide with prod. The HMAC secret is bound via `alchemy.secret(...)`
+ * so it is encrypted in state and delivered to the Worker's runtime env.
  */
+import alchemy from "alchemy";
 import { Worker, Container, DurableObjectNamespace } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
 
@@ -52,15 +53,13 @@ export async function sandboxStack(
     bindings: {
       Sandbox: sandboxDO,
       SANDBOX_IMAGE: sandboxImage,
-      SANDBOX_HMAC_KEY: alchemySecret("SANDBOX_HMAC_KEY"),
+      // alchemy.secret() pulls from ALCHEMY_PASSWORD-encrypted state and
+      // delivers the plaintext to the Worker's runtime env. The
+      // secretsStack registers SANDBOX_HMAC_KEY first; this binding pins
+      // the value on the Worker.
+      SANDBOX_HMAC_KEY: alchemy.secret(process.env.SANDBOX_HMAC_KEY),
     },
   });
 
   return { hostname: worker.url, workerName };
-}
-
-// Inline secret reference; the secretsStack registers the value with the
-// matching name, so this stays declarative.
-function alchemySecret(name: string) {
-  return { type: "secret" as const, name };
 }
