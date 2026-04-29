@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { applyRefreshedBacklog, approveArtifactLearning, createRepositoryWorldScan, demoData, ingestBacklogIssue, moveJob, parseGitListingOutput, rejectBacklogIssue, voteOnApproval } from "../src/domain/demoData";
+import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, createRepositoryWorldScan, demoData, ingestBacklogIssue, moveJob, parseGitListingOutput, rejectBacklogIssue, voteOnApproval } from "../src/domain/demoData";
 
 describe("Code Colony demo state", () => {
   it("moves jobs across operation-board lanes", () => {
@@ -125,5 +125,14 @@ describe("Code Colony demo state", () => {
     expect(next).not.toBe(demoData);
     expect(next.backlog).toEqual(refreshed);
     expect(demoData.backlog).not.toBe(next.backlog);
+  });
+
+  it("applyRefreshedRepoScan replaces the leading scan immutably", () => {
+    const fresh = createRepositoryWorldScan(demoData, ["src/domain/types.ts"], { source: "live_scan", generatedAt: "2026-04-29T13:00:00.000Z" });
+    const next = applyRefreshedRepoScan(demoData, fresh);
+    expect(next).not.toBe(demoData);
+    expect(next.repoScans[0]).toBe(fresh);
+    expect(next.repoScans[0].source).toBe("live_scan");
+    expect(demoData.repoScans[0].source).toBe("seeded_inventory");
   });
 });
