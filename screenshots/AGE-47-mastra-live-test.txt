@@ -1,0 +1,7 @@
+ ✓ __tests__/mastra.test.ts > Mastra wiring > freeLLMModelConfig defaults point at localhost:3001/v1 1ms
+ ✓ __tests__/mastra.test.ts > Mastra wiring > freeLLMModelConfig honors overrides and env-style fields 0ms
+ ✓ __tests__/mastra.test.ts > Mastra wiring > backlog triage agent is registered with Mastra 0ms
+ ✓ __tests__/mastra.test.ts > Mastra wiring > backlog triage agent has an id and a model resolved 1ms
+ ✓ __tests__/mastra.test.ts > Mastra wiring > backlog triage agent returns a JSON suggestion against the live endpoint 7427ms
+      Tests  5 passed (5)
+   Duration  7.68s (transform 16ms, setup 0ms, import 191ms, tests 7.43s, environment 0ms)
