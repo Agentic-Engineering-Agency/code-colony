@@ -1,6 +1,6 @@
-import type { DemoData, GovernanceState, Id, RepositoryWorldScan } from "./types";
+import type { BacklogIssue, DemoData, GovernanceState, Id, Job, RepositoryWorldScan } from "./types";
 
-const demoSeed: Omit<DemoData, "repoScans"> = {
+const demoSeed: Omit<DemoData, "repoScans" | "backlog"> = {
   company: { id: "company-agentic", name: "Agentic Engineering", purpose: "Build AI-native engineering systems with visible governance and memory.", reputation: 74, budget: 128000, trustLevel: 82 },
   projectWorld: { id: "world-code-colony", companyId: "company-agentic", name: "Code Colony", domain: "software", repoUrl: "https://github.com/Agentic-Engineering-Agency/code-colony", mapStatus: "active", slogan: "Where your repo becomes a living company." },
   regions: [
@@ -65,8 +65,14 @@ const demoSeed: Omit<DemoData, "repoScans"> = {
     { regionId: "runtime", technicalDebt: 62, operationalRisk: 71, securitySensitivity: 58, testCoverageConfidence: 63, documentationQuality: 68 },
     { regionId: "frontend", technicalDebt: 38, operationalRisk: 31, securitySensitivity: 20, testCoverageConfidence: 74, documentationQuality: 81 },
   ],
-  costLedger: [{ id: "cost-1", jobId: "job-spec-preview", agentRunId: "run-preview", modelProvider: "simulated", runtimeSeconds: 184, estimatedCostUsd: 1.42 }],
+  costLedger: [{ id: "cost-1", jobId: "job-spec-preview", agentRunId: "run-preview", modelProvider: "simulated", runtimeSeconds: 184, estimatedCostUsd: 1.42 }]
 };
+
+const demoBacklog: BacklogIssue[] = [
+  { id: "backlog-linear-pix-1", source: "linear", externalRef: "AE-101", title: "Render world map districts in PixiJS", summary: "Replace CSS region nodes with a PixiJS scene that preserves district colors and trust meters.", suggestedRegionId: "frontend", status: "new" },
+  { id: "backlog-gh-runtime-7", source: "github", externalRef: "#7", title: "Wire real Oh My Pi worker behind RuntimeWorker contract", summary: "Implement an OhMyPiWorker that satisfies RuntimeWorker and shells out to a local sandbox.", suggestedRegionId: "runtime", status: "new" },
+  { id: "backlog-manual-mem-3", source: "manual", externalRef: "OPS-MEM-3", title: "Persist memory ledger to Convex", summary: "Define a memory provider abstraction and back it with a Convex schema.", suggestedRegionId: "memory", status: "new" },
+];
 
 const demoRepositoryPaths = [
   "app/layout.tsx",
@@ -170,7 +176,7 @@ export function createRepositoryWorldScan(data: RepoWorldData, rawPaths: readonl
   };
 }
 
-export const demoData: DemoData = { ...demoSeed, repoScans: [createRepositoryWorldScan(demoSeed, demoRepositoryPaths)] };
+export const demoData: DemoData = { ...demoSeed, repoScans: [createRepositoryWorldScan(demoSeed, demoRepositoryPaths)], backlog: demoBacklog };
 
 export function moveJob(data: DemoData, jobId: Id, state: GovernanceState): DemoData {
   return { ...data, jobs: data.jobs.map((job) => (job.id === jobId ? { ...job, state } : job)) };
@@ -183,4 +189,37 @@ export function voteOnApproval(data: DemoData, approvalId: Id, decision: "approv
 
 export function approveArtifactLearning(data: DemoData): DemoData {
   return { ...data, memories: data.memories.map((memory) => memory.id === "mem-2" ? { ...memory, status: "accepted" } : memory), skillProposals: data.skillProposals.map((skill) => skill.id === "skill-1" ? { ...skill, approvalStatus: "approved" } : skill) };
+}
+
+
+function regionToAgentId(suggestedRegionId: Id): Id {
+  switch (suggestedRegionId) {
+    case "frontend":
+      return "frontend";
+    case "runtime":
+      return "operator";
+    case "memory":
+      return "curator";
+    case "testing":
+      return "qa";
+    default:
+      return "architect";
+  }
+}
+
+export function ingestBacklogIssue(data: DemoData, issueId: Id): DemoData {
+  const issue = data.backlog.find((entry) => entry.id === issueId);
+  if (!issue || issue.status !== "new") return data;
+  const jobId = `job-from-${issue.id}`;
+  if (data.jobs.some((existing) => existing.id === jobId)) return data;
+  const newJob: Job = { id: jobId, title: issue.title, specId: "spec-preview", agentEmployeeId: regionToAgentId(issue.suggestedRegionId), state: "proposed", affectedRegionIds: [issue.suggestedRegionId], risk: "medium", estimate: "tbd" };
+  return {
+    ...data,
+    jobs: [...data.jobs, newJob],
+    backlog: data.backlog.map((entry) => entry.id === issueId ? { ...entry, status: "ingested" as const, ingestedJobId: jobId } : entry),
+  };
+}
+
+export function rejectBacklogIssue(data: DemoData, issueId: Id): DemoData {
+  return { ...data, backlog: data.backlog.map((entry) => entry.id === issueId && entry.status === "new" ? { ...entry, status: "rejected" as const } : entry) };
 }

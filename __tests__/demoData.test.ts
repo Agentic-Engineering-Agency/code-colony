@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { approveArtifactLearning, createRepositoryWorldScan, demoData, moveJob, parseGitListingOutput, voteOnApproval } from "../src/domain/demoData";
+import { approveArtifactLearning, createRepositoryWorldScan, demoData, ingestBacklogIssue, moveJob, parseGitListingOutput, rejectBacklogIssue, voteOnApproval } from "../src/domain/demoData";
 
 describe("Code Colony demo state", () => {
   it("moves jobs across operation-board lanes", () => {
@@ -87,5 +87,35 @@ describe("Code Colony demo state", () => {
     expect(scan.districts.find((district) => district.regionId === "hq")?.fileCount).toBeGreaterThan(0);
     expect(scan.districts.find((district) => district.regionId === "runtime")?.fileCount).toBeGreaterThan(0);
     expect(scan.districts.find((district) => district.regionId === "testing")?.fileCount).toBeGreaterThan(0);
+  });
+
+  it("ingests a backlog issue into a proposed job and marks it ingested", () => {
+    const target = demoData.backlog[0];
+    const next = ingestBacklogIssue(demoData, target.id);
+
+    expect(next).not.toBe(demoData);
+    expect(next.backlog.find((entry) => entry.id === target.id)?.status).toBe("ingested");
+    expect(next.backlog.find((entry) => entry.id === target.id)?.ingestedJobId).toBe(`job-from-${target.id}`);
+    const newJob = next.jobs.find((job) => job.id === `job-from-${target.id}`);
+    expect(newJob?.state).toBe("proposed");
+    expect(newJob?.affectedRegionIds).toEqual([target.suggestedRegionId]);
+    expect(demoData.backlog[0].status).toBe("new");
+  });
+
+  it("is idempotent when ingesting the same issue twice", () => {
+    const target = demoData.backlog[0];
+    const once = ingestBacklogIssue(demoData, target.id);
+    const twice = ingestBacklogIssue(once, target.id);
+    expect(twice).toBe(once);
+    expect(twice.jobs.filter((job) => job.id === `job-from-${target.id}`)).toHaveLength(1);
+  });
+
+  it("rejecting a backlog issue does not create a job", () => {
+    const target = demoData.backlog[1];
+    const next = rejectBacklogIssue(demoData, target.id);
+
+    expect(next.backlog.find((entry) => entry.id === target.id)?.status).toBe("rejected");
+    expect(next.jobs.some((job) => job.id === `job-from-${target.id}`)).toBe(false);
+    expect(ingestBacklogIssue(next, target.id)).toBe(next);
   });
 });
