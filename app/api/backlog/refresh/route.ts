@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
 import { demoData } from "@/domain/demoData";
 import { runBacklogRefreshRequest } from "@/server/backlogRouteCore";
 import { createKeyedTtlMemo } from "@/server/ttlMemo";
-import { buildCacheControl } from "@/server/cacheControl";
+import { jsonRouteResponse } from "@/server/routeResponse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const DEFAULT_REPO = "Agentic-Engineering-Agency/code-colony";
 const BACKLOG_TTL_MS = 3_000;
+const BACKLOG_TTL_SECONDS = Math.floor(BACKLOG_TTL_MS / 1000);
 
 const backlogRefreshMemo = createKeyedTtlMemo<string, Awaited<ReturnType<typeof runBacklogRefreshRequest>>>(
   (key) => runBacklogRefreshRequest({ searchParams: new URLSearchParams(key), data: demoData, defaultRepo: DEFAULT_REPO }),
@@ -22,8 +22,5 @@ export async function GET(request: Request) {
     source: url.searchParams.get("source") ?? "all",
   }).toString();
   const result = await backlogRefreshMemo.get(key);
-  return NextResponse.json(result.body, {
-    status: result.status,
-    headers: { "Cache-Control": buildCacheControl(Math.floor(BACKLOG_TTL_MS / 1000)) },
-  });
+  return jsonRouteResponse(result.body, { status: result.status, cacheSeconds: BACKLOG_TTL_SECONDS });
 }

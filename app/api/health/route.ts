@@ -1,11 +1,10 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { NextResponse } from "next/server";
 import { demoData } from "@/domain/demoData";
 import { buildVersionProbe, runHealthCheckRequest, type CommandRunner } from "@/server/healthRouteCore";
 import { buildRuntimeHealthProbe } from "@/server/runtimeHealthProbe";
 import { createTtlMemo } from "@/server/ttlMemo";
-import { buildCacheControl } from "@/server/cacheControl";
+import { jsonRouteResponse } from "@/server/routeResponse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +16,7 @@ const defaultRunner: CommandRunner = async (file, args) => {
 };
 
 const HEALTH_TTL_MS = 5_000;
+const HEALTH_TTL_SECONDS = Math.floor(HEALTH_TTL_MS / 1000);
 
 const healthMemo = createTtlMemo(
   () => runHealthCheckRequest({
@@ -29,8 +29,5 @@ const healthMemo = createTtlMemo(
 
 export async function GET() {
   const result = await healthMemo.get();
-  return NextResponse.json(result.body, {
-    status: result.status,
-    headers: { "Cache-Control": buildCacheControl(Math.floor(HEALTH_TTL_MS / 1000)) },
-  });
+  return jsonRouteResponse(result.body, { status: result.status, cacheSeconds: HEALTH_TTL_SECONDS });
 }
