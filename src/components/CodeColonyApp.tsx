@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
 import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
 import { DEFAULT_RUNTIME_PREVIEW_REQUEST, SIMULATED_RUNTIME_DESCRIPTION, appendRuntimeWorkerResult, runSimulatedRuntimePreview, type RuntimeWorkerRequest, type RuntimeWorkerResult } from "@/domain/runtime";
+import { useTtlPoll } from "./useTtlPoll";
 import type { AgentEmployee, BacklogIssue, DemoData, GovernanceState, Region, RepositoryWorldScan, Room } from "@/domain/types";
 
 type Screen = "world" | "operations" | "governance" | "agents" | "runtime" | "artifact" | "marketplace" | "memory";
@@ -188,29 +189,19 @@ function ArtifactScreen({ data, onApproveLearning }: { data: DemoData; onApprove
 function MemoryScreen({ data }: { data: DemoData }) { return <section className="memory-grid">{data.memories.map((memory) => <div className="panel" key={memory.id}><div className="panel-head"><span className="ttl">{memory.scope} · {memory.kind}</span><span className="sub">{memory.status}</span></div><div className="panel-body"><p>{memory.content}</p><Meter value={Math.round(memory.confidence * 100)} tone="memory" /><p className="muted">Provenance: {memory.provenanceMode}</p></div></div>)}{data.skillProposals.map((skill) => <div className="card skill" key={skill.id}><div className="cap"><span>SKILL UPDATE</span><span>{skill.approvalStatus}</span></div><div className="body"><div className="ttl">{skill.skillId}</div><p className="desc">{skill.diffSummary}</p></div><div className="stats"><span>Tier {skill.approvalTier}</span><span>{skill.kind}</span></div></div>)}</section>; }
 function MarketplaceScreen({ data }: { data: DemoData }) { return <section className="market-grid">{data.marketplace.map((pkg) => <div className="card reference" style={{ width: "100%" }} key={pkg.id}><div className="cap"><span>{pkg.kind}</span><span>{pkg.version}</span></div><div className="body"><div className="ttl">{pkg.name}</div><p className="desc">{pkg.description}</p><div className="tag-row"><span className="badge trust">{pkg.trustTier}</span><span className="badge system">{pkg.installScope}</span></div><button className="btn primary" style={{ marginTop: 10 }}>Install / Equip</button></div></div>)}</section>; }
 
+type HealthProbe = { available: boolean; detail?: string };
+type HealthPayload = { probes: { gh: HealthProbe; git: HealthProbe; runtime: HealthProbe }; ok: boolean; generatedAt: string };
+
+async function fetchHealth(): Promise<HealthPayload> {
+  const response = await fetch("/api/health");
+  if (!response.ok) throw new Error(`health ${response.status}`);
+  return (await response.json()) as HealthPayload;
+}
+
 function HealthStrip({ fallback }: { fallback: { trustLevel: number; budget: number } }) {
-  type Probes = { gh: { available: boolean; detail?: string }; git: { available: boolean; detail?: string }; runtime: { available: boolean; detail?: string } };
-  type HealthPayload = { probes: Probes; ok: boolean; generatedAt: string };
-  const [payload, setPayload] = useState<HealthPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const response = await fetch("/api/health");
-        if (!response.ok) throw new Error(`health ${response.status}`);
-        const data = (await response.json()) as HealthPayload;
-        if (!cancelled) { setPayload(data); setError(null); }
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
-      }
-    };
-    void load();
-    const interval = setInterval(() => { void load(); }, 5_000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, []);
+  const { data: payload, error } = useTtlPoll(fetchHealth, { intervalMs: 5_000 });
   const probes = payload?.probes;
-  const tooltipFor = (probe?: { available: boolean; detail?: string }) => probe ? `${probe.available ? "available" : "unavailable"}${probe.detail ? `: ${probe.detail}` : ""}` : (error ?? "loading");
+  const tooltipFor = (probe?: HealthProbe) => probe ? `${probe.available ? "available" : "unavailable"}${probe.detail ? `: ${probe.detail}` : ""}` : (error ?? "loading");
   const aggregateValue = payload ? (payload.ok ? "ok" : "deg") : (error ? "err" : "…");
   const aggregateTone = payload?.ok ? "trust" : payload || error ? "risk" : "system";
   const aggregateTooltip = payload ? `seam health ${payload.ok ? "ok" : "degraded"} · ${payload.generatedAt}` : (error ?? "loading");
