@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
 import { demoData } from "@/domain/demoData";
 import { runRepoScanRequest } from "@/server/repoRouteCore";
 import { createKeyedTtlMemo } from "@/server/ttlMemo";
-import { buildCacheControl } from "@/server/cacheControl";
+import { jsonRouteResponse } from "@/server/routeResponse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REPO_SCAN_TTL_MS = 3_000;
+const REPO_SCAN_TTL_SECONDS = Math.floor(REPO_SCAN_TTL_MS / 1000);
 
 const repoScanMemo = createKeyedTtlMemo<string, Awaited<ReturnType<typeof runRepoScanRequest>>>(
   (key) => runRepoScanRequest({
@@ -22,8 +22,5 @@ export async function GET(request: Request) {
   const cwd = url.searchParams.get("cwd");
   const key = cwd ?? "__default__";
   const result = await repoScanMemo.get(key);
-  return NextResponse.json(result.body, {
-    status: result.status,
-    headers: { "Cache-Control": buildCacheControl(Math.floor(REPO_SCAN_TTL_MS / 1000)) },
-  });
+  return jsonRouteResponse(result.body, { status: result.status, cacheSeconds: REPO_SCAN_TTL_SECONDS });
 }
