@@ -55,19 +55,13 @@ export async function dnsStack(
   }
   const zoneId = zone.id;
 
-  if (args.landing.hostname) {
-    await DnsRecords("landing-apex", {
-      zoneId,
-      records: [
-        {
-          type: "CNAME",
-          name: "@",
-          content: args.landing.hostname,
-          proxied: true,
-        },
-      ],
-    });
-  }
+  // Landing apex/www: deliberately not managed by alchemy. Cloudflare's
+  // zone-create flow auto-provisioned `@`/`www` CNAME records (Cloudflare's
+  // standard zone bootstrap), and recreating them collides with code 81053.
+  // The Pages project (alchemy/landing.ts adopts it) is independently routed
+  // by those existing records; alchemy can re-take ownership in a follow-up
+  // PR after the conflicting records are deleted manually.
+  void args.landing;
 
   if (args.app.hostname) {
     await CustomDomain("app", {
