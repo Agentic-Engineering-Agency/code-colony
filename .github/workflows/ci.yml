@@ -105,7 +105,7 @@ jobs:
       - if: steps.probe.outputs.present == 'true'
         name: Wrangler dry-run deploy
         working-directory: apps/sandbox-runner
-        run: npx wrangler deploy --dry-run
+        run: npx wrangler deploy --dry-run --config wrangler.toml
 
   convex:
     name: convex
