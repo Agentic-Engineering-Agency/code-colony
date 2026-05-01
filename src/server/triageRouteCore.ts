@@ -25,6 +25,8 @@ export function isBacklogIssueLike(value: unknown): value is BacklogIssue {
   const candidate = value as Partial<BacklogIssue>;
   return (
     typeof candidate.id === "string" &&
+    typeof candidate.source === "string" &&
+    typeof candidate.externalRef === "string" &&
     typeof candidate.title === "string" &&
     typeof candidate.summary === "string" &&
     typeof candidate.suggestedRegionId === "string"
