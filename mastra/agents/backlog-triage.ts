@@ -22,7 +22,10 @@ function tools(): Record<string, ReturnType<typeof runCommandTool>> {
   if (hasEnv) {
     return { runCommand: runCommandTool() };
   }
-  if (process.env.NODE_ENV === "production") {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.NEXT_PHASE !== "phase-production-build"
+  ) {
     throw new Error(
       "backlogTriageAgent: SANDBOX_RUNNER_URL and SANDBOX_HMAC_KEY must be set in production",
     );
