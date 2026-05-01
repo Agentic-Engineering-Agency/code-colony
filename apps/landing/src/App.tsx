@@ -60,6 +60,7 @@ export function App() {
       {tw.tickerOn && <StatusTicker />}
       <div id="top" aria-hidden="true" />
       <section className="hero" id="hero">
+        <div className="hero-bg" aria-hidden="true" />
         <div className="container">
           <Hero
             headline={tw.headline}
