@@ -11,6 +11,7 @@ import { components } from "./_generated/api";
  */
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
   waitlistJoin: { kind: "fixed window", rate: 1, period: DAY },
+  waitlistGlobal: { kind: "token bucket", rate: 100, period: HOUR, capacity: 200 },
   openrouterCall: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 60 },
   sandboxSpawn: { kind: "token bucket", rate: 30, period: MINUTE, capacity: 30 },
   apiPerHour: { kind: "fixed window", rate: 1000, period: HOUR },
