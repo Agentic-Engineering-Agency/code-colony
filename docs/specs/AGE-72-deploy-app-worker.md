@@ -45,7 +45,7 @@ const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs"; // verified in Phase D
 entrypoint: BUILT_WORKER_ENTRYPOINT,
 ```
 
-`AppStackArgs`, `AppStackOutput`, `compatibilityDate`, `compatibilityFlags`, and the `bindings` block are unchanged. `Worker.adopt` stays absent (parity with current `appStack` behavior; sandbox stack uses `adopt: true`, app stack does not — that asymmetry is intentional and out of scope).
+`AppStackArgs`, `AppStackOutput`, `compatibilityDate`, and the `bindings` block are unchanged. A new `compatibilityFlags = ["nodejs_compat"]` constant is added to `alchemy/app.ts` and forwarded to `Worker(...)` so the SSR bundle's `node:stream/web`, `node:stream`, and `node:async_hooks` imports resolve at upload time; the value is sourced verbatim from `wrangler.jsonc` `compatibility_flags`. `Worker.adopt` stays absent (parity with current `appStack` behavior; sandbox stack uses `adopt: true`, app stack does not — that asymmetry is intentional and out of scope).
 
 ### `alchemy.run.ts` deltas
 
@@ -190,10 +190,10 @@ The final `ls` confirms the `BUILT_WORKER_ENTRYPOINT` constant matches reality o
 ```bash
 curl --fail-with-body -sS -o /dev/null -w 'HTTP %{http_code}\n' https://app.codecolony.online/
 curl --fail-with-body -sS https://app.codecolony.online/ | grep -F 'data-era'
-curl --fail-with-body -sS -o /dev/null -w 'HTTP %{http_code}\n' https://app.codecolony.online/__health
+curl --fail-with-body -sS -o /dev/null -w 'HTTP %{http_code}\n' https://app.codecolony.online/
 ```
 
-The first command must return `HTTP 200` (proving the custom domain binds and TLS is issued). The second must succeed with a non-empty match — the `data-era` attribute is set on the root element by `app/layout` equivalents in TanStack Start and proves SSR HTML, not a Cloudflare error page. The third probes a representative app route; if `/__health` does not exist on this branch, substitute the first declared route from `app/routes/` (verified during PR review) and re-run. Phase D verification item: confirm the exact route path used for the smoke before the PR is opened, and pin it in the PR description.
+The first command must return `HTTP 200` (proving the custom domain binds and TLS is issued). The second must succeed with a non-empty match — the `data-era` attribute is set on the root element by `app/routes/__root.tsx` and proves SSR HTML, not a Cloudflare error page. The third re-probes the apex route as the only declared TanStack Start route on this branch (`app/routes/index.tsx`); if/when additional routes land they should be added to this smoke.
 
 ## Risk register
 
