@@ -23,24 +23,31 @@
  *   already covers the local dev path; CI uses a scoped service token.
  */
 import alchemy from "alchemy";
-import { landingStack } from "./alchemy/landing.js";
-import { sandboxStack } from "./alchemy/sandbox.js";
-import { dnsStack } from "./alchemy/dns.js";
-import { secretsStack } from "./alchemy/secrets.js";
+import { CloudflareStateStore } from "alchemy/state";
+import { landingStack } from "./alchemy/landing.ts";
+import { sandboxStack } from "./alchemy/sandbox.ts";
+import { appStack } from "./alchemy/app.ts";
+import { dnsStack } from "./alchemy/dns.ts";
+import { secretsStack } from "./alchemy/secrets.ts";
 
 const stage = process.env.ALCHEMY_STAGE ?? "dev";
 
 const app = await alchemy("code-colony", {
   stage,
   password: process.env.ALCHEMY_PASSWORD,
+  stateStore:
+    process.env.ALCHEMY_STATE_STORE === "cloudflare"
+      ? (scope) => new CloudflareStateStore(scope)
+      : undefined,
 });
 
 // Stacks intentionally compose top-down so the secrets stack runs first and
-// later stacks can reference its outputs. `dns` is the last to run because it
-// depends on the public hostnames every other stack registers.
+// later stacks can reference its outputs. `app` depends on the sandbox runner
+// URL, and `dns` is the last to run because it binds every public hostname.
 await secretsStack(app, { stage });
 const landing = await landingStack(app, { stage });
 const sandbox = await sandboxStack(app, { stage });
-await dnsStack(app, { stage, landing, sandbox });
+const appWorker = await appStack(app, { stage, sandbox });
+await dnsStack(app, { stage, landing, app: appWorker, sandbox });
 
 await app.finalize();

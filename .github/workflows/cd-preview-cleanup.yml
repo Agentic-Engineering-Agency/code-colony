@@ -1,0 +1,72 @@
+name: CD Preview Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: cd-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      PREVIEW_NAME: pr-${{ github.event.pull_request.number }}
+      ALCHEMY_STAGE: preview-${{ github.event.pull_request.number }}
+      CLOUDFLARE_ACCOUNT_ID: 48f381bf59212dbd98d2b424ba4b9a04
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ALCHEMY_PASSWORD: ${{ secrets.ALCHEMY_PASSWORD }}
+      ALCHEMY_STATE_STORE: cloudflare
+      ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
+      SANDBOX_HMAC_KEY: ${{ secrets.SANDBOX_HMAC_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - id: convex-secret
+        name: Detect Convex deploy key
+        run: |
+          if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CONVEX_DEPLOY_KEY not configured; skipping Convex preview cleanup."
+          fi
+
+      - if: steps.convex-secret.outputs.ready == 'true'
+        name: Delete Convex preview
+        run: npx convex preview delete --preview-name "$PREVIEW_NAME" || true
+
+      - id: deploy-secrets
+        name: Detect Cloudflare deploy secrets
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN ALCHEMY_PASSWORD ALCHEMY_STATE_TOKEN SANDBOX_HMAC_KEY OPENROUTER_API_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::notice::${name} not configured; preview infrastructure cleanup will be skipped."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.deploy-secrets.outputs.ready == 'true'
+        name: Install Alchemy for cleanup
+        run: npm install --no-save alchemy
+
+      - if: steps.deploy-secrets.outputs.ready == 'true'
+        name: Destroy Cloudflare preview infrastructure
+        run: npm run iac:destroy -- --stage "$ALCHEMY_STAGE" || true

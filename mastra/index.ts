@@ -6,4 +6,4 @@ export const mastra = new Mastra({
 });
 
 export { backlogTriageAgent };
-export { freeLLMModelConfig, getFreeLLMConfig, type FreeLLMConfig } from "./llm";
+export { openRouterModelConfig, getOpenRouterConfig, type OpenRouterConfig } from "./llm";

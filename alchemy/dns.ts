@@ -1,24 +1,37 @@
 /**
- * DNS stack. Owns the `codecolony.dev` zone records that fan out to the
- * landing page (Pages CustomDomain), the sandbox runner Worker
- * (CustomDomain), and the FreeLLMAPI tunnel (raw DnsRecords CNAME).
+ * DNS stack. Owns the `codecolony.online` zone records for the Code Colony
+ * deployment: landing page at the apex (and `www`), TanStack Start app at
+ * `app`, sandbox runner at `sandbox`.
  *
  * Only runs for the `prod` stage. Preview stages use the per-PR
  * `*.workers.dev` and `*.pages.dev` URLs Cloudflare emits by default.
  *
  * Distinction:
- *   - `CustomDomain` binds a Cloudflare Worker (or Pages project) to a
- *     hostname. We use it for the landing page and sandbox Worker.
- *   - `DnsRecords` writes raw zone records (CNAME, A, TXT). The
- *     FreeLLMAPI tunnel is just a CNAME to `<tunnel-id>.cfargotunnel.com`,
- *     so it goes through `DnsRecords`, not `CustomDomain`.
+ *   - `CustomDomain` binds a Cloudflare Worker to a hostname. We use it for
+ *     the app Worker and sandbox Worker.
+ *   - `DnsRecords` writes raw zone records (CNAME, A, TXT). The landing page
+ *     points at the existing Pages hostname through `DnsRecords`.
+ *
+ * The `codecolony.online` zone is delegated to the Agentic Engineering
+ * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). If the zone is
+ * absent at deploy time, fall back to the emitted `*.workers.dev` /
+ * `*.pages.dev` hostnames and skip this prod DNS stack until delegation
+ * is restored.
+ *
+ * The previous AGE-56 `llm.codecolony.online` Cloudflare-Tunnel record is
+ * intentionally absent: we now call OpenRouter directly from the app
+ * Worker, so no self-hosted LLM endpoint needs to be reachable from
+ * Cloudflare's edge.
  */
 import { CustomDomain, DnsRecords } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
 
+const ZONE = "codecolony.online";
+
 export interface DnsStackArgs {
   stage: string;
   landing: { hostname: string | undefined };
+  app: { hostname: string | undefined; workerName: string };
   sandbox: { hostname: string | undefined; workerName: string };
 }
 
@@ -29,47 +42,38 @@ export async function dnsStack(
   if (args.stage !== "prod") return;
 
   if (args.landing.hostname) {
-    await CustomDomain("landing-apex", {
-      name: "codecolony.dev",
-      zoneName: "codecolony.dev",
-      workerName: args.landing.hostname,
+    await DnsRecords("landing-apex", {
+      zone: ZONE,
+      records: [
+        {
+          type: "CNAME",
+          name: "@",
+          content: args.landing.hostname,
+          proxied: true,
+        },
+        {
+          type: "CNAME",
+          name: "www",
+          content: args.landing.hostname,
+          proxied: true,
+        },
+      ],
     });
+  }
 
-    await CustomDomain("landing-www", {
-      name: "www.codecolony.dev",
-      zoneName: "codecolony.dev",
-      workerName: args.landing.hostname,
+  if (args.app.hostname) {
+    await CustomDomain("app", {
+      name: `app.${ZONE}`,
+      zoneName: ZONE,
+      workerName: args.app.workerName,
     });
   }
 
   if (args.sandbox.hostname) {
     await CustomDomain("sandbox", {
-      name: "sandbox.codecolony.dev",
-      zoneName: "codecolony.dev",
+      name: `sandbox.${ZONE}`,
+      zoneName: ZONE,
       workerName: args.sandbox.workerName,
     });
   }
-
-  // Cloudflare Tunnel CNAME for FreeLLMAPI. Tunnel id comes from
-  // `cloudflared tunnel create freellmapi` output (AGE-56). Fail loudly if
-  // the placeholder is still in place — pushing it to prod would break
-  // `llm.codecolony.dev` and leave a bogus CNAME on the live zone.
-  const tunnelId = process.env.FREELLM_TUNNEL_ID;
-  if (!tunnelId) {
-    throw new Error(
-      "dnsStack(prod): FREELLM_TUNNEL_ID not set. Run `cloudflared tunnel create freellmapi` (AGE-56) and set the resulting UUID before deploying DNS.",
-    );
-  }
-
-  await DnsRecords("freellm-tunnel", {
-    zone: "codecolony.dev",
-    records: [
-      {
-        type: "CNAME",
-        name: "llm",
-        content: `${tunnelId}.cfargotunnel.com`,
-        proxied: true,
-      },
-    ],
-  });
 }

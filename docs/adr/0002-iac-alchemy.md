@@ -10,11 +10,12 @@
 
 Code Colony already runs four pieces of Cloudflare infrastructure: the static
 landing page (Pages), the Next.js app (Workers, future), the sandbox-runner
-Worker with a Container-backed Durable Object (AGE-49), and a forthcoming
-Cloudflare Tunnel for FreeLLMAPI (AGE-56). DNS at `codecolony.dev` ties them
-together. We also keep a roster of secrets (HMAC, FreeLLMAPI key, R2 admin
-keys, Better Auth secret, Convex deploy key) that today live in `wrangler
-secret put` and ad-hoc shell history.
+Worker with a Container-backed Durable Object (AGE-49), and an OpenRouter
+API key bound to the app Worker for LLM inference (replacing the originally
+planned AGE-56 self-hosted FreeLLMAPI tunnel). DNS at `codecolony.online`
+ties the public hostnames together. We also keep a roster of secrets (HMAC,
+OpenRouter API key, R2 admin keys, Better Auth secret, Convex deploy key)
+that today live in `wrangler secret put` and ad-hoc shell history.
 
 We need the same artifacts to be reproducible across `dev`, `preview-<pr>`,
 and `prod` stages, with per-PR ephemerals destroyed on PR close. We also

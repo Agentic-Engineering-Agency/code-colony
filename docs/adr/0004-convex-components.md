@@ -9,7 +9,7 @@
 
 The MVP runs against a Convex dev deployment with a hand-written schema and a
 single seed mutation. Several upcoming surfaces (durable agent runs, rate
-limits on FreeLLMAPI, OG-image storage in R2, real waitlist signups, streaming
+limits on OpenRouter, OG-image storage in R2, real waitlist signups, streaming
 LLM rationale) need infrastructure that is awkward to express directly on raw
 Convex tables. Convex publishes a curated set of *components* — pre-packaged,
 versioned modules that mount under `app.use(...)` and expose a typed client —

@@ -1,14 +1,14 @@
 /**
- * Landing-page stack. Imports the existing Cloudflare Pages project named
+ * Landing-page stack. References the existing Cloudflare Pages project named
  * `code-colony-landing` rather than recreating it — the project was created
- * manually via `wrangler pages` during the AGE-50 fast-path deploy and we
- * want Alchemy to adopt it without disrupting the live URL.
+ * manually via `wrangler pages` during the AGE-50 fast-path deploy and is
+ * still deployed by the Pages workflow outside this Alchemy stack.
  *
- * Until the AGE-51 Vite port lands, this stack is a no-op for non-prod
- * stages: previews of the landing page do not justify a separate Pages
- * project per PR (the static fast-path already covers the demo surface).
+ * Alchemy's currently installed Cloudflare provider does not expose a Pages
+ * resource. DNS therefore CNAMEs the apex subdomain to the stable Pages
+ * hostname returned here, while previews keep using Cloudflare's default
+ * Pages/Workers preview URLs.
  */
-import { Pages } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
 
 export interface LandingStackArgs {
@@ -27,13 +27,5 @@ export async function landingStack(
     return { hostname: undefined };
   }
 
-  // `adopt: true` tells Alchemy to bind to the existing `code-colony-landing`
-  // Pages project instead of erroring out on creation conflict.
-  const project = await Pages("landing", {
-    name: "code-colony-landing",
-    adopt: true,
-    productionBranch: "main",
-  });
-
-  return { hostname: project.subdomain };
+  return { hostname: "code-colony-landing.pages.dev" };
 }
