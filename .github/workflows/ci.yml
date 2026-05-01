@@ -5,8 +5,14 @@ on:
   push:
     branches: [main]
 
+# Cancel previous runs for the same PR; keep main pushes serial (per run).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  verify:
+  root:
+    name: root (next)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,3 +25,134 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  landing:
+    name: landing (vite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: probe
+        name: Detect apps/landing
+        run: |
+          if [ -f apps/landing/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::apps/landing/package.json not present; skipping with success."
+          fi
+      - if: steps.probe.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/landing/package-lock.json
+      - if: steps.probe.outputs.present == 'true'
+        name: Install
+        working-directory: apps/landing
+        run: npm ci
+      - if: steps.probe.outputs.present == 'true'
+        name: Typecheck
+        working-directory: apps/landing
+        run: npm run typecheck
+      - if: steps.probe.outputs.present == 'true'
+        name: Build
+        working-directory: apps/landing
+        run: npm run build
+
+  sandbox:
+    name: sandbox-runner (worker)
+    runs-on: ubuntu-latest
+    env:
+      # Skip wrangler's Docker probe in CI; --dry-run does not need it.
+      WRANGLER_DOCKER_BIN: /usr/bin/true
+    steps:
+      - uses: actions/checkout@v4
+      - id: probe
+        name: Detect apps/sandbox-runner
+        run: |
+          if [ -f apps/sandbox-runner/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::apps/sandbox-runner/package.json not present; skipping with success."
+          fi
+      - if: steps.probe.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/sandbox-runner/package-lock.json
+      - if: steps.probe.outputs.present == 'true'
+        name: Install
+        working-directory: apps/sandbox-runner
+        run: npm ci
+      - if: steps.probe.outputs.present == 'true'
+        name: Test (vitest)
+        working-directory: apps/sandbox-runner
+        run: npx vitest run
+      - if: steps.probe.outputs.present == 'true'
+        name: Wrangler dry-run deploy
+        working-directory: apps/sandbox-runner
+        run: npx wrangler deploy --dry-run
+
+  convex:
+    name: convex
+    runs-on: ubuntu-latest
+    env:
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: probe
+        name: Detect Convex secret
+        # Secrets cannot be referenced from step `if:`, so gate via env.
+        run: |
+          if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CONVEX_DEPLOY_KEY not configured (e.g. fork PR); skipping convex leg with success."
+          fi
+      - if: steps.probe.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - if: steps.probe.outputs.ready == 'true'
+        name: Install
+        run: npm ci
+      - if: steps.probe.outputs.ready == 'true'
+        name: Convex dev sync (codegen + schema push to dev deployment)
+        run: npx convex dev --once --typecheck disable
+      - if: ${{ steps.probe.outputs.ready == 'true' && hashFiles('convex/tsconfig.json') != '' }}
+        name: Typecheck convex/
+        run: npx tsc --noEmit -p convex/tsconfig.json
+
+  ci:
+    name: ci
+    if: always()
+    needs: [root, landing, sandbox, convex]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate matrix results
+        env:
+          ROOT_RESULT: ${{ needs.root.result }}
+          LANDING_RESULT: ${{ needs.landing.result }}
+          SANDBOX_RESULT: ${{ needs.sandbox.result }}
+          CONVEX_RESULT: ${{ needs.convex.result }}
+        run: |
+          echo "root=$ROOT_RESULT"
+          echo "landing=$LANDING_RESULT"
+          echo "sandbox=$SANDBOX_RESULT"
+          echo "convex=$CONVEX_RESULT"
+          fail=0
+          for r in "$ROOT_RESULT" "$LANDING_RESULT" "$SANDBOX_RESULT" "$CONVEX_RESULT"; do
+            case "$r" in
+              success|skipped) ;;
+              *) fail=1 ;;
+            esac
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::One or more CI matrix legs failed."
+            exit 1
+          fi
+          echo "All matrix legs passed."
