@@ -82,6 +82,15 @@ jobs:
 
       - name: Deploy Cloudflare infrastructure
         run: npm run iac:deploy -- --stage prod
+      - name: Attach apex domain to Pages project
+        run: |
+          chmod +x scripts/attach-pages-domain.sh
+          ./scripts/attach-pages-domain.sh codecolony.online
+
+      - name: Verify apex domain
+        run: |
+          sleep 5
+          curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://codecolony.online/ || true
 
       - if: always() && env.SLACK_WEBHOOK_URL != ''
         name: Notify Slack

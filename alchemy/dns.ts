@@ -52,10 +52,17 @@ export async function dnsStack(
         `verify delegation before redeploying.`,
     );
   }
+  const zoneId = zone.id;
+  void zoneId;
 
-  void zone.id;
-
-  // Landing apex/www: deliberately not managed by alchemy.
+  // Landing apex/www: deliberately not managed by alchemy DnsRecords.
+  // Cloudflare's zone-create flow auto-provisioned `@`/`www` CNAME records
+  // (standard zone bootstrap), and recreating them collides with code 81053.
+  // Instead, the apex domain is attached as a custom domain to the Pages
+  // project (code-colony-landing) via the Cloudflare API in cd-prod.yml.
+  // Cloudflare then manages the apex DNS record and TLS automatically.
+  // See scripts/attach-pages-domain.sh for the API call.
+  void args.landing;
 
   if (args.app.hostname) {
     await CustomDomain("app", {

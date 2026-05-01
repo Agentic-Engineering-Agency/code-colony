@@ -5,9 +5,10 @@
  * still deployed by the Pages workflow outside this Alchemy stack.
  *
  * Alchemy's currently installed Cloudflare provider does not expose a Pages
- * resource. DNS therefore CNAMEs the apex subdomain to the stable Pages
- * hostname returned here, while previews keep using Cloudflare's default
- * Pages/Workers preview URLs.
+ * resource. The apex domain (codecolony.online) is attached as a custom domain
+ * to the Pages project via the Cloudflare API in cd-prod.yml. Cloudflare then
+ * manages the apex DNS record and TLS automatically.
+ * Previews keep using Cloudflare's default Pages/Workers preview URLs.
  */
 import type Alchemy from "alchemy";
 
