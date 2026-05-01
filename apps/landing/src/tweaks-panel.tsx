@@ -177,13 +177,17 @@ export function TweaksPanel({
   }, [open, clampToViewport]);
 
   React.useEffect(() => {
+    const isEmbedded = window.parent !== window;
     const onMsg = (e: MessageEvent) => {
+      if (!isEmbedded || e.source !== window.parent) return;
       const t = (e as any)?.data?.type;
       if (t === "__activate_edit_mode") setOpen(true);
       else if (t === "__deactivate_edit_mode") setOpen(false);
     };
     window.addEventListener("message", onMsg);
-    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    if (isEmbedded) {
+      window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    }
     return () => window.removeEventListener("message", onMsg);
   }, []);
 

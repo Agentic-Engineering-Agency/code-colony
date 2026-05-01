@@ -23,7 +23,7 @@ export function HeroVariantA({ headline, subhead, onWaitlist }: HeroProps) {
             className="btn primary lg"
             onClick={() =>
               document
-                .getElementById("demo")
+                .getElementById("vignette")
                 ?.scrollIntoView({ behavior: "smooth" })
             }
           >
@@ -75,7 +75,7 @@ export function HeroVariantB({ headline, subhead, onWaitlist }: HeroProps) {
           className="btn primary lg"
           onClick={() =>
             document
-              .getElementById("demo")
+              .getElementById("vignette")
               ?.scrollIntoView({ behavior: "smooth" })
           }
         >
