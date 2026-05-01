@@ -8,12 +8,12 @@
  * `*.workers.dev` and `*.pages.dev` URLs Cloudflare emits by default.
  *
  * Distinction:
- *   - `CustomDomain` binds a Cloudflare Worker (or Pages project) to a
- *     hostname. We use it for the landing page, app Worker, and sandbox
- *     Worker.
- *   - `DnsRecords` writes raw zone records (CNAME, A, TXT). The
- *     FreeLLMAPI tunnel is just a CNAME to `<tunnel-id>.cfargotunnel.com`,
- *     so it goes through `DnsRecords`, not `CustomDomain`.
+ *   - `CustomDomain` binds a Cloudflare Worker to a hostname. We use it for
+ *     the app Worker and sandbox Worker.
+ *   - `DnsRecords` writes raw zone records (CNAME, A, TXT). The landing page
+ *     points at the existing Pages hostname, and the FreeLLMAPI tunnel is a
+ *     CNAME to `<tunnel-id>.cfargotunnel.com`, so both go through
+ *     `DnsRecords`.
  *
  * Local verification on 2026-05-01 confirmed Wrangler is authenticated to
  * Cloudflare account `48f381bf59212dbd98d2b424ba4b9a04`. This Wrangler
@@ -39,10 +39,16 @@ export async function dnsStack(
   if (args.stage !== "prod") return;
 
   if (args.landing.hostname) {
-    await CustomDomain("landing-apex", {
-      name: "codecolony.agenticengineering.lat",
-      zoneName: "agenticengineering.lat",
-      workerName: args.landing.hostname,
+    await DnsRecords("landing-apex", {
+      zone: "agenticengineering.lat",
+      records: [
+        {
+          type: "CNAME",
+          name: "codecolony",
+          content: args.landing.hostname,
+          proxied: true,
+        },
+      ],
     });
   }
 
