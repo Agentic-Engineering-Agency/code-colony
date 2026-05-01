@@ -25,8 +25,8 @@ npx wrangler rollback --name code-colony-sandbox-runner
 
 If Wrangler prompts for a specific version, select the last known healthy deployment from the list. After rollback, verify the custom domains:
 
-- `https://app.codecolony.agenticengineering.lat`
-- `https://sandbox.codecolony.agenticengineering.lat`
+- `https://app.codecolony.online`
+- `https://sandbox.codecolony.online`
 
 ## Landing Pages rollback
 

@@ -45,7 +45,7 @@ export async function appStack(
         ? "https://pastel-cricket-679.convex.cloud"
         : "https://deafening-puma-904.convex.cloud",
       FREELLM_URL: isProd
-        ? "https://llm.codecolony.agenticengineering.lat/v1"
+        ? "https://llm.codecolony.online/v1"
         : "http://127.0.0.1:3001/v1",
       FREELLM_MODEL_ID: "qwen/qwen3-coder:free",
       FREELLM_API_KEY: alchemy.secret(process.env.FREELLM_API_KEY),

@@ -1,8 +1,8 @@
 /**
- * DNS stack. Owns the `agenticengineering.lat` zone records for the Code
- * Colony deployment: landing page at `codecolony`, TanStack Start app at
- * `app.codecolony`, sandbox runner at `sandbox.codecolony`, and the AGE-56
- * FreeLLMAPI tunnel placeholder at `llm.codecolony`.
+ * DNS stack. Owns the `codecolony.online` zone records for the Code Colony
+ * deployment: landing page at the apex, TanStack Start app at `app`,
+ * sandbox runner at `sandbox`, and the AGE-56 FreeLLMAPI tunnel placeholder
+ * at `llm`.
  *
  * Only runs for the `prod` stage. Preview stages use the per-PR
  * `*.workers.dev` and `*.pages.dev` URLs Cloudflare emits by default.
@@ -15,15 +15,16 @@
  *     CNAME to `<tunnel-id>.cfargotunnel.com`, so both go through
  *     `DnsRecords`.
  *
- * Local verification on 2026-05-01 confirmed Wrangler is authenticated to
- * Cloudflare account `48f381bf59212dbd98d2b424ba4b9a04`. This Wrangler
- * version does not expose `wrangler dns records list`, and no local
- * `CLOUDFLARE_API_TOKEN` was present for direct zone lookup; if the zone is
- * absent at deploy time, use the emitted `*.workers.dev` / `*.pages.dev`
- * hostnames and skip this prod DNS stack until the zone is delegated.
+ * The `codecolony.online` zone is delegated to the Agentic Engineering
+ * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). If the zone is
+ * absent at deploy time, fall back to the emitted `*.workers.dev` /
+ * `*.pages.dev` hostnames and skip this prod DNS stack until delegation
+ * is restored.
  */
 import { CustomDomain, DnsRecords } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
+
+const ZONE = "codecolony.online";
 
 export interface DnsStackArgs {
   stage: string;
@@ -40,11 +41,17 @@ export async function dnsStack(
 
   if (args.landing.hostname) {
     await DnsRecords("landing-apex", {
-      zone: "agenticengineering.lat",
+      zone: ZONE,
       records: [
         {
           type: "CNAME",
-          name: "codecolony",
+          name: "@",
+          content: args.landing.hostname,
+          proxied: true,
+        },
+        {
+          type: "CNAME",
+          name: "www",
           content: args.landing.hostname,
           proxied: true,
         },
@@ -54,25 +61,25 @@ export async function dnsStack(
 
   if (args.app.hostname) {
     await CustomDomain("app", {
-      name: "app.codecolony.agenticengineering.lat",
-      zoneName: "agenticengineering.lat",
+      name: `app.${ZONE}`,
+      zoneName: ZONE,
       workerName: args.app.workerName,
     });
   }
 
   if (args.sandbox.hostname) {
     await CustomDomain("sandbox", {
-      name: "sandbox.codecolony.agenticengineering.lat",
-      zoneName: "agenticengineering.lat",
+      name: `sandbox.${ZONE}`,
+      zoneName: ZONE,
       workerName: args.sandbox.workerName,
     });
   }
   await DnsRecords("freellm-tunnel", {
-    zone: "agenticengineering.lat",
+    zone: ZONE,
     records: [
       {
         type: "CNAME",
-        name: "llm.codecolony",
+        name: "llm",
         content: "<TODO-AGE-56:tunnel-id>.cfargotunnel.com",
         proxied: true,
       },

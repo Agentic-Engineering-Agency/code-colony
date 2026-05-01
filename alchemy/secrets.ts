@@ -8,7 +8,7 @@
  *   SANDBOX_HMAC_KEY        sandbox-runner Worker (AGE-49)
  *   FREELLM_API_KEY         FreeLLMAPI bearer token, surfaced to the app
  *                           Worker via Mastra `mastra/llm.ts`
- *   FREELLM_URL             FreeLLMAPI base URL (https://llm.codecolony.agenticengineering.lat/v1)
+ *   FREELLM_URL             FreeLLMAPI base URL (https://llm.codecolony.online/v1)
  *
  * Convex-bound secrets are intentionally NOT registered here. Per ADR
  * 0004 they are consumed by Convex Functions and must be set via
