@@ -11,6 +11,11 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 | `CONVEX_DEPLOY_KEY` | Convex dashboard → project settings → deploy keys for the production project. | Deploy permission for the Code Colony Convex project. | 90 days, and immediately after maintainer offboarding. | Convex project admins and GitHub repository admins. |
 | `OPENROUTER_API_KEY` | https://openrouter.ai/keys | Bearer token for OpenRouter's OpenAI-compatible API used by Mastra (`mastra/llm.ts`). | 30 to 60 days, or immediately on provider-side key exposure. | LLM service owners and GitHub repository admins. |
 | `SANDBOX_HMAC_KEY` | Generate with a password manager or `openssl rand -base64 32`. | Shared HMAC key between the app Worker and sandbox-runner Worker. | 90 days; rotate app and sandbox deploys together. | Infrastructure maintainers and GitHub repository admins. |
+| `DODO_PAYMENTS_API_KEY` | Dodo Payments dashboard → API Keys. | Billing/checkout integration via `@dodopayments/convex`. | On exposure or rotation policy from Dodo. | Billing admins and GitHub repository admins. |
+| `DODO_PAYMENTS_WEBHOOK_SECRET` | Dodo Payments dashboard → Webhooks. | Verify incoming Dodo webhook signatures. | On exposure. | Billing admins and GitHub repository admins. |
+| `STEEL_API_KEY` | Steel dashboard → API Keys (https://steel.dev). | Cloud browser sessions via `@steel-dev/convex`. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
+| `RESEND_API_KEY` | Resend dashboard → API Keys. | Email delivery via `@convex-dev/resend`. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
+| `RESEND_WEBHOOK_SECRET` | Resend dashboard → Webhooks. | Verify incoming Resend webhook signatures. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
 
 ## Rotation notes
 

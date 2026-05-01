@@ -16,6 +16,15 @@ import persistentTextStreaming from "@convex-dev/persistent-text-streaming/conve
 import crons from "@convex-dev/crons/convex.config";
 import betterAuth from "@convex-dev/better-auth/convex.config";
 import r2 from "@convex-dev/r2/convex.config";
+import agent from "@convex-dev/agent/convex.config";
+import resend from "@convex-dev/resend/convex.config";
+import dodopayments from "@dodopayments/convex/convex.config";
+import llmCache from "@mzedstudio/llm-cache/convex.config";
+import steel from "@steel-dev/convex/convex.config";
+import agentReady from "@waynesutton/agent-ready/convex.config";
+import orchestrator from "@akshatgiri/convex-orchestrator/convex.config";
+import timeline from "convex-timeline/convex.config";
+import webhookSender from "convex-webhook-sender/convex.config";
 
 const app = defineApp();
 app.use(workflow);
@@ -29,5 +38,14 @@ app.use(persistentTextStreaming);
 app.use(crons);
 app.use(betterAuth);
 app.use(r2);
+app.use(agent);
+app.use(resend);
+app.use(dodopayments);
+app.use(llmCache, { name: "llmCache" });
+app.use(steel);
+app.use(agentReady);
+app.use(orchestrator);
+app.use(timeline);
+app.use(webhookSender);
 
 export default app;
