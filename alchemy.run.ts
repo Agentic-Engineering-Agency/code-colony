@@ -26,7 +26,7 @@ import alchemy from "alchemy";
 import { CloudflareStateStore } from "alchemy/state";
 import { landingStack } from "./alchemy/landing.ts";
 import { sandboxStack } from "./alchemy/sandbox.ts";
-import { appStack } from "./alchemy/app.ts";
+// import { appStack } from "./alchemy/app.ts"; // deferred: needs a TanStack Start build step before alchemy can bundle the entry
 import { dnsStack } from "./alchemy/dns.ts";
 import { secretsStack } from "./alchemy/secrets.ts";
 
@@ -47,7 +47,12 @@ const app = await alchemy("code-colony", {
 await secretsStack(app, { stage });
 const landing = await landingStack(app, { stage });
 const sandbox = await sandboxStack(app, { stage });
-const appWorker = await appStack(app, { stage, sandbox });
-await dnsStack(app, { stage, landing, app: appWorker, sandbox });
+// const appWorker = await appStack(app, { stage, sandbox }); // deferred
+await dnsStack(app, {
+  stage,
+  landing,
+  app: { hostname: undefined, workerName: "code-colony-app" },
+  sandbox,
+});
 
 await app.finalize();
