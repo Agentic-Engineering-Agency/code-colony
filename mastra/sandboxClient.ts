@@ -88,6 +88,8 @@ export class SandboxClient {
   private readonly timeoutMs: number;
 
   constructor(private readonly config: SandboxClientConfig) {
+    const url = config.baseUrl.replace(/\/$/, "");
+    this.config = { ...config, baseUrl: url };
     this.fetchImpl = config.fetchImpl ?? fetch;
     this.now = config.now ?? Date.now;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;

@@ -132,6 +132,14 @@ export function rejectionReason(
   if (!matches) {
     return `not in allow-list: ${allowList.join(", ")}`;
   }
+  // Reject git commands that write to disk via --output= (policy bypass).
+  if (command.startsWith("git ") && command.includes("--output=")) {
+    return "git --output= is not allowed (write-capable flag)";
+  }
+  // Reject ripgrep commands that execute arbitrary preprocessors.
+  if (command.startsWith("rg ") && command.includes("--pre=")) {
+    return "rg --pre= is not allowed (arbitrary subprocess execution)";
+  }
   return null;
 }
 

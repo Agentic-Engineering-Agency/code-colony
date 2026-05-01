@@ -92,6 +92,18 @@ describe("rejectionReason / isAllowed", () => {
     }
   });
 
+  it("rejects git diff --output= (write-capable flag bypass)", () => {
+    expect(isAllowed("git diff --output=/tmp/pwn", DEFAULT_ALLOWED_COMMANDS)).toBe(false);
+    const reason = rejectionReason("git diff --output=/tmp/pwn", DEFAULT_ALLOWED_COMMANDS);
+    expect(reason).toMatch(/--output= is not allowed/);
+  });
+
+  it("rejects rg --pre= (arbitrary subprocess execution)", () => {
+    expect(isAllowed("rg hello --pre=touch .", DEFAULT_ALLOWED_COMMANDS)).toBe(false);
+    const reason = rejectionReason("rg hello --pre=touch .", DEFAULT_ALLOWED_COMMANDS);
+    expect(reason).toMatch(/--pre= is not allowed/);
+  });
+
   it("does NOT include node --version in the default allow-list (--eval bypass)", () => {
     expect(DEFAULT_ALLOWED_COMMANDS).not.toContain("node --version");
     expect(
@@ -251,5 +263,21 @@ describe("runCommand tool", () => {
       status: 429,
       path: "/exec",
     } satisfies Partial<SandboxError>);
+  });
+
+  it("strips trailing slash from baseUrl to avoid double-slash paths", async () => {
+    let requestedUrl = "";
+    const fetchImpl: typeof fetch = vi.fn(async (input) => {
+      requestedUrl = String(input);
+      return new Response(JSON.stringify({ ok: true, command: "ls", sandboxId: "x", exitCode: 0, stdout: "", stderr: "", durationMs: 1 }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const sandbox = new SandboxClient({
+      baseUrl: "https://sandbox.example/",
+      hmacSecret: "secret",
+      fetchImpl,
+      now: () => 1700000000000,
+    });
+    await sandbox.exec({ command: "ls" });
+    expect(requestedUrl).toBe("https://sandbox.example/exec");
   });
 });
