@@ -49,11 +49,14 @@ If the dashboard promotion is unavailable, check out the known-good commit and r
 
 ## Convex rollback
 
-Convex deploys are versioned by deployment. Identify the previous healthy version in the Convex dashboard or release notes, then run the targeted version command from the repo root:
+Convex deploys are versioned by deployment. Identify the previous healthy version in the Convex dashboard or release notes, then redeploy that version from the repo root:
 
 ```bash
-npx convex run --version <prev>
+# Checkout the known-good commit and redeploy
+npx convex deploy
 ```
+
+Or promote the previous deployment directly in the Convex dashboard (Deployments → select version → Promote).
 
 If schema changes are involved, confirm the previous functions are compatible with current data before rollback. For destructive schema mistakes, stop traffic at the Worker layer first, snapshot/export affected data where possible, then restore the last known compatible Convex version.
 
