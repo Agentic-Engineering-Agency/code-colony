@@ -21,8 +21,15 @@ export interface AppStackOutput {
   workerName: string;
 }
 
-const WRANGLER_ENTRYPOINT = "@tanstack/react-start/server-entry";
+// Deploy-time entrypoint. The TanStack Start vite build emits the SSR Worker
+// bundle here; alchemy uploads exactly this file. `wrangler.jsonc` deliberately
+// keeps the virtual `@tanstack/react-start/server-entry` so `wrangler dev` /
+// `npm run dev:tanstack` continue to work against the unbuilt source. See
+// docs/specs/AGE-72-deploy-app-worker.md §S6 for why these two surfaces stay
+// separate sources of truth.
+const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
 const WRANGLER_COMPATIBILITY_DATE = "2026-04-29";
+const WRANGLER_COMPATIBILITY_FLAGS = ["nodejs_compat"] as const;
 const CLOUDFLARE_ACCOUNT_ID = "48f381bf59212dbd98d2b424ba4b9a04";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1";
 const OPENROUTER_MODEL_ID = "qwen/qwen3-coder:free";
@@ -40,8 +47,9 @@ export async function appStack(
 
   const worker = await Worker(workerName, {
     name: workerName,
-    entrypoint: WRANGLER_ENTRYPOINT,
+    entrypoint: BUILT_WORKER_ENTRYPOINT,
     compatibilityDate: WRANGLER_COMPATIBILITY_DATE,
+    compatibilityFlags: WRANGLER_COMPATIBILITY_FLAGS,
     bindings: {
       CONVEX_URL: isProd
         ? "https://pastel-cricket-679.convex.cloud"

@@ -80,6 +80,9 @@ jobs:
       - name: Install Alchemy for deploy
         run: npm install --no-save alchemy
 
+      - name: Build TanStack Start app
+        run: npm run build:tanstack
+
       - name: Deploy Cloudflare infrastructure
         run: npm run iac:deploy -- --stage prod
       - name: Attach apex domain to Pages project
