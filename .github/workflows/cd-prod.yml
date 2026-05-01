@@ -1,0 +1,80 @@
+name: CD Prod
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: 48f381bf59212dbd98d2b424ba4b9a04
+      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ALCHEMY_PASSWORD: ${{ secrets.ALCHEMY_PASSWORD }}
+      ALCHEMY_STATE_STORE: cloudflare
+      ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
+      SANDBOX_HMAC_KEY: ${{ secrets.SANDBOX_HMAC_KEY }}
+      FREELLM_API_KEY: ${{ secrets.FREELLM_API_KEY }}
+      FREELLM_URL: https://llm.codecolony.agenticengineering.lat/v1
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install landing dependencies
+        working-directory: apps/landing
+        run: npm ci --workspaces=false
+
+      - name: Install sandbox-runner dependencies
+        working-directory: apps/sandbox-runner
+        run: npm ci --workspaces=false
+
+      - name: Test root
+        run: npm test
+
+      - name: Test landing
+        working-directory: apps/landing
+        run: npm test --if-present
+
+      - name: Test sandbox-runner
+        working-directory: apps/sandbox-runner
+        run: npm test
+
+      - id: convex-secret
+        name: Detect Convex deploy key
+        run: |
+          if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CONVEX_DEPLOY_KEY not configured; skipping Convex prod deploy."
+          fi
+
+      - if: steps.convex-secret.outputs.ready == 'true'
+        name: Deploy Convex prod
+        run: npx convex deploy --yes
+
+      - name: Install Alchemy for deploy
+        run: npm install --no-save alchemy
+
+      - name: Deploy Cloudflare infrastructure
+        run: npm run iac:deploy -- --stage prod
+
+      - if: always() && env.SLACK_WEBHOOK_URL != ''
+        name: Notify Slack
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"Code Colony prod deploy finished with status: ${{ job.status }}\"}" \
+            "$SLACK_WEBHOOK_URL"

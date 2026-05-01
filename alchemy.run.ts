@@ -25,6 +25,7 @@
 import alchemy from "alchemy";
 import { landingStack } from "./alchemy/landing.js";
 import { sandboxStack } from "./alchemy/sandbox.js";
+import { appStack } from "./alchemy/app.js";
 import { dnsStack } from "./alchemy/dns.js";
 import { secretsStack } from "./alchemy/secrets.js";
 
@@ -36,11 +37,12 @@ const app = await alchemy("code-colony", {
 });
 
 // Stacks intentionally compose top-down so the secrets stack runs first and
-// later stacks can reference its outputs. `dns` is the last to run because it
-// depends on the public hostnames every other stack registers.
+// later stacks can reference its outputs. `app` depends on the sandbox runner
+// URL, and `dns` is the last to run because it binds every public hostname.
 await secretsStack(app, { stage });
 const landing = await landingStack(app, { stage });
 const sandbox = await sandboxStack(app, { stage });
-await dnsStack(app, { stage, landing, sandbox });
+const appWorker = await appStack(app, { stage, sandbox });
+await dnsStack(app, { stage, landing, app: appWorker, sandbox });
 
 await app.finalize();
