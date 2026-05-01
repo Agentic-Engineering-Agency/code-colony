@@ -68,6 +68,7 @@ export async function dnsStack(
       name: `app.${ZONE}`,
       zoneName: ZONE,
       workerName: args.app.workerName,
+      adopt: true,
     });
   }
 
@@ -76,6 +77,7 @@ export async function dnsStack(
       name: `sandbox.${ZONE}`,
       zoneName: ZONE,
       workerName: args.sandbox.workerName,
+      adopt: true,
     });
   }
 }
