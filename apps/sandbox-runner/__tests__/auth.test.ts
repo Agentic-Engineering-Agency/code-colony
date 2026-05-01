@@ -139,4 +139,15 @@ describe("verifyHmac", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toBe("invalid timestamp");
   });
+
+  it("rejects bodies larger than MAX_BODY_BYTES", async () => {
+    const bigBody = "x".repeat(1 * 1024 * 1024 + 1);
+    const req = await signedRequest(bigBody);
+    const result = await verifyHmac(req, SECRET, { now: () => NOW });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("body too large");
+      expect(result.status).toBe(413);
+    }
+  });
 });

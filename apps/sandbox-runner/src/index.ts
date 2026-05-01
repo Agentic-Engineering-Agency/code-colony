@@ -17,7 +17,6 @@ import { getSandbox, type Sandbox as SandboxClass } from "@cloudflare/sandbox";
 import { verifyHmac } from "./auth";
 import type {
   ErrorResponseBody,
-  ExecRequest,
   ExecResponse,
   GitCloneRequest,
   GitCloneResponse,
@@ -120,7 +119,7 @@ async function handleGitClone(
     });
     const body: GitCloneResponse = {
       ok: result.success,
-      repoUrl: result.repoUrl,
+      repoUrl: redactCredentials(result.repoUrl),
       branch: result.branch,
       targetDir: result.targetDir,
       exitCode: result.exitCode,
@@ -152,6 +151,19 @@ function optionalString(value: unknown): string | undefined {
 
 function optionalNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+function redactCredentials(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.password || u.username) {
+      u.password = "";
+      u.username = "";
+      return u.toString();
+    }
+  } catch {
+    // Not a valid URL — return unchanged.
+  }
+  return url;
 }
 
 function toErrorMessage(error: unknown, fallback: string): string {
