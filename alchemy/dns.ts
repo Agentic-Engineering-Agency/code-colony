@@ -13,17 +13,21 @@
  *     points at the existing Pages hostname through `DnsRecords`.
  *
  * The `codecolony.online` zone is delegated to the Agentic Engineering
- * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). If the zone is
- * absent at deploy time, fall back to the emitted `*.workers.dev` /
- * `*.pages.dev` hostnames and skip this prod DNS stack until delegation
- * is restored.
+ * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). Alchemy's
+ * `DnsRecords` resource requires a zoneId, so we resolve the zone name
+ * via the Cloudflare API at deploy time.
  *
  * The previous AGE-56 `llm.codecolony.online` Cloudflare-Tunnel record is
  * intentionally absent: we now call OpenRouter directly from the app
  * Worker, so no self-hosted LLM endpoint needs to be reachable from
  * Cloudflare's edge.
  */
-import { CustomDomain, DnsRecords } from "alchemy/cloudflare";
+import {
+  CustomDomain,
+  DnsRecords,
+  createCloudflareApi,
+  getZoneByDomain,
+} from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
 
 const ZONE = "codecolony.online";
@@ -41,9 +45,19 @@ export async function dnsStack(
 ) {
   if (args.stage !== "prod") return;
 
+  const api = await createCloudflareApi();
+  const zone = await getZoneByDomain(api, ZONE);
+  if (!zone) {
+    throw new Error(
+      `dnsStack(prod): zone ${ZONE} not found in this Cloudflare account; ` +
+        `verify delegation before redeploying.`,
+    );
+  }
+  const zoneId = zone.id;
+
   if (args.landing.hostname) {
     await DnsRecords("landing-apex", {
-      zone: ZONE,
+      zoneId,
       records: [
         {
           type: "CNAME",
