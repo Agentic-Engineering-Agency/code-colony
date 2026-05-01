@@ -50,16 +50,18 @@ export async function sandboxStack(
     name: workerName,
     entrypoint: "apps/sandbox-runner/src/index.ts",
     compatibilityDate: "2026-04-29",
+    compatibilityFlags: ["nodejs_compat"],
     bindings: {
+      // The Container resource (sandboxImage) is bound to the DO namespace at
+      // the platform level via [[containers]] class_name="Sandbox", not as a
+      // Worker binding. The Worker only needs the DO binding so user code can
+      // call env.Sandbox.idFromName(...).get(...).
       Sandbox: sandboxDO,
-      SANDBOX_IMAGE: sandboxImage,
-      // alchemy.secret() pulls from ALCHEMY_PASSWORD-encrypted state and
-      // delivers the plaintext to the Worker's runtime env. The
-      // secretsStack registers SANDBOX_HMAC_KEY first; this binding pins
-      // the value on the Worker.
       SANDBOX_HMAC_KEY: alchemy.secret(process.env.SANDBOX_HMAC_KEY),
     },
   });
+  // Hold a reference to sandboxImage so its provisioning is not pruned.
+  void sandboxImage;
 
   return { hostname: worker.url, workerName };
 }
