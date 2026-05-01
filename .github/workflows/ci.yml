@@ -63,10 +63,22 @@ jobs:
     name: sandbox-runner (worker)
     runs-on: ubuntu-latest
     env:
-      # Skip wrangler's Docker probe in CI; --dry-run does not need it.
-      WRANGLER_DOCKER_BIN: /usr/bin/true
+      # Wrangler 4.87+ streams the Dockerfile to docker stdin even on --dry-run;
+      # use a shim that consumes stdin and exits 0.
+      WRANGLER_DOCKER_BIN: /tmp/fake-docker.sh
     steps:
       - uses: actions/checkout@v4
+      - name: Install fake docker shim
+        run: |
+          cat > /tmp/fake-docker.sh <<'SHIM'
+          #!/usr/bin/env bash
+          # Consume stdin if present so wrangler's docker build pipe doesn't EPIPE.
+          if [ ! -t 0 ]; then cat > /dev/null; fi
+          # Emit a fake image id so wrangler's parser is happy.
+          echo "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          exit 0
+          SHIM
+          chmod +x /tmp/fake-docker.sh
       - id: probe
         name: Detect apps/sandbox-runner
         run: |
