@@ -39,7 +39,6 @@
     "@convex-dev/workflow": "^0.3.12",
     "@convex-dev/workpool": "^0.4.6",
     "@dodopayments/convex": "^0.2.11",
-    "@ikhrustalev/convex-debouncer": "^0.1.2",
     "@mastra/core": "^1.29.0",
     "@mzedstudio/llm-cache": "^0.1.0",
     "@next/eslint-plugin-next": "latest",
