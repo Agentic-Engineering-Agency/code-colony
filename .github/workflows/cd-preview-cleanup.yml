@@ -21,8 +21,7 @@ jobs:
       ALCHEMY_STATE_STORE: cloudflare
       ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
       SANDBOX_HMAC_KEY: ${{ secrets.SANDBOX_HMAC_KEY }}
-      FREELLM_API_KEY: ${{ secrets.FREELLM_API_KEY }}
-      FREELLM_URL: http://127.0.0.1:3001/v1
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -52,7 +51,7 @@ jobs:
         name: Detect Cloudflare deploy secrets
         run: |
           missing=0
-          for name in CLOUDFLARE_API_TOKEN ALCHEMY_PASSWORD ALCHEMY_STATE_TOKEN SANDBOX_HMAC_KEY FREELLM_API_KEY; do
+          for name in CLOUDFLARE_API_TOKEN ALCHEMY_PASSWORD ALCHEMY_STATE_TOKEN SANDBOX_HMAC_KEY OPENROUTER_API_KEY; do
             if [ -z "${!name:-}" ]; then
               echo "::notice::${name} not configured; preview infrastructure cleanup will be skipped."
               missing=1

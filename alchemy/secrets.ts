@@ -6,9 +6,8 @@
  *
  * Cloudflare-bound secrets only:
  *   SANDBOX_HMAC_KEY        sandbox-runner Worker (AGE-49)
- *   FREELLM_API_KEY         FreeLLMAPI bearer token, surfaced to the app
+ *   OPENROUTER_API_KEY      OpenRouter bearer token, surfaced to the app
  *                           Worker via Mastra `mastra/llm.ts`
- *   FREELLM_URL             FreeLLMAPI base URL (https://llm.codecolony.online/v1)
  *
  * Convex-bound secrets are intentionally NOT registered here. Per ADR
  * 0004 they are consumed by Convex Functions and must be set via
@@ -26,8 +25,7 @@ import type Alchemy from "alchemy";
 
 const REQUIRED_PROD_SECRETS = [
   "SANDBOX_HMAC_KEY",
-  "FREELLM_API_KEY",
-  "FREELLM_URL",
+  "OPENROUTER_API_KEY",
 ] as const;
 
 export interface SecretsStackArgs {

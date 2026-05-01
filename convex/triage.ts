@@ -18,7 +18,7 @@ import { regionCommandCounter } from "./counter";
  * Each step is checkpointed by `@convex-dev/workflow`, so a crash mid-flow
  * resumes from the last completed step instead of re-running the whole
  * pipeline. The Mastra call also passes through `@convex-dev/action-cache`,
- * so identical issues do not re-hit FreeLLMAPI within the cache TTL.
+ * so identical issues do not re-hit OpenRouter within the cache TTL.
  */
 export const triageWorkflow = workflow.define({
   args: { issueSeedId: v.string() },
@@ -50,7 +50,7 @@ export const startTriage = mutation({
   args: { issueSeedId: v.string() },
   returns: v.string(),
   handler: async (ctx, args): Promise<string> => {
-    const { ok, retryAfter } = await rateLimiter.limit(ctx, "freellmCall", {
+    const { ok, retryAfter } = await rateLimiter.limit(ctx, "openrouterCall", {
       key: "global",
     });
     if (!ok) {
@@ -87,7 +87,7 @@ export const persistSuggestion = internalMutation({
   },
 });
 
-/** Cache wrapper invoked by the workflow. Hits FreeLLMAPI through the retrier. */
+/** Cache wrapper invoked by the workflow. Hits OpenRouter through the retrier. */
 export const runTriageCached = internalAction({
   args: {
     issueSeedId: v.string(),

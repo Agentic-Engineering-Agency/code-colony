@@ -1,31 +1,37 @@
 /**
- * Model configuration for the FreeLLMAPI OpenAI-compatible endpoint.
+ * Model configuration for OpenRouter (https://openrouter.ai), an
+ * OpenAI-compatible aggregator. Mastra's openai-compatible provider talks
+ * to `${OPENROUTER_URL}/chat/completions` with a bearer token, so the
+ * wiring is identical to a plain OpenAI deployment — only the base URL,
+ * the API key, and the model id change.
  *
- * The endpoint is expected to be running locally (e.g. `npx tsx server.ts` from
- * https://github.com/tashfeenahmed/freellmapi) and to honor the `/v1/chat/completions`
- * path that the OpenAI Chat Completions API exposes.
- *
- * The user's reported address `http://0.0.0.0:3001` is a bind-all address which
- * is not routable as a destination; from this host it's reachable as
- * `http://localhost:3001` or `http://127.0.0.1:3001`.
+ * The base URL is fixed and public; we expose it as an env override for
+ * tests and dev only. In production, the app Worker reads
+ * `OPENROUTER_API_KEY` from a secret binding and the URL/model id from
+ * plain bindings.
  */
 
-const DEFAULT_FREELLM_URL = "http://localhost:3001/v1";
-const DEFAULT_FREELLM_MODEL_ID = "qwen/qwen3-coder:free";
+const DEFAULT_OPENROUTER_URL = "https://openrouter.ai/api/v1";
+const DEFAULT_OPENROUTER_MODEL_ID = "qwen/qwen3-coder:free";
 
-export type FreeLLMConfig = {
+export type OpenRouterConfig = {
   url: string;
   modelId: string;
   apiKey: string;
   providerId: string;
 };
 
-export function getFreeLLMConfig(overrides: Partial<FreeLLMConfig> = {}): FreeLLMConfig {
+export function getOpenRouterConfig(
+  overrides: Partial<OpenRouterConfig> = {},
+): OpenRouterConfig {
   return {
-    url: overrides.url ?? process.env.FREELLM_URL ?? DEFAULT_FREELLM_URL,
-    modelId: overrides.modelId ?? process.env.FREELLM_MODEL_ID ?? DEFAULT_FREELLM_MODEL_ID,
-    apiKey: overrides.apiKey ?? process.env.FREELLM_API_KEY ?? "",
-    providerId: overrides.providerId ?? "freellm",
+    url: overrides.url ?? process.env.OPENROUTER_URL ?? DEFAULT_OPENROUTER_URL,
+    modelId:
+      overrides.modelId ??
+      process.env.OPENROUTER_MODEL_ID ??
+      DEFAULT_OPENROUTER_MODEL_ID,
+    apiKey: overrides.apiKey ?? process.env.OPENROUTER_API_KEY ?? "",
+    providerId: overrides.providerId ?? "openrouter",
   };
 }
 
@@ -33,8 +39,10 @@ export function getFreeLLMConfig(overrides: Partial<FreeLLMConfig> = {}): FreeLL
  * Returns a `MastraModelConfig` shape compatible with `@mastra/core`'s
  * `Agent` constructor.
  */
-export function freeLLMModelConfig(overrides: Partial<FreeLLMConfig> = {}) {
-  const config = getFreeLLMConfig(overrides);
+export function openRouterModelConfig(
+  overrides: Partial<OpenRouterConfig> = {},
+) {
+  const config = getOpenRouterConfig(overrides);
   return {
     providerId: config.providerId,
     modelId: config.modelId,

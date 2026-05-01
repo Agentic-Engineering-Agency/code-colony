@@ -4,8 +4,8 @@
  * local Wrangler deploys and Alchemy deploys cannot drift.
  *
  * Per-PR previews prefix the Worker name with the stage and bind dev-safe
- * service URLs. Production binds the public Convex deployment and the AGE-56
- * FreeLLMAPI tunnel hostname.
+ * service URLs. Production binds the public Convex deployment and OpenRouter
+ * (https://openrouter.ai/api/v1) for LLM inference.
  */
 import alchemy from "alchemy";
 import { Worker } from "alchemy/cloudflare";
@@ -24,6 +24,8 @@ export interface AppStackOutput {
 const WRANGLER_ENTRYPOINT = "@tanstack/react-start/server-entry";
 const WRANGLER_COMPATIBILITY_DATE = "2026-04-29";
 const CLOUDFLARE_ACCOUNT_ID = "48f381bf59212dbd98d2b424ba4b9a04";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1";
+const OPENROUTER_MODEL_ID = "qwen/qwen3-coder:free";
 
 export async function appStack(
   _app: Awaited<ReturnType<typeof Alchemy>>,
@@ -44,11 +46,9 @@ export async function appStack(
       CONVEX_URL: isProd
         ? "https://pastel-cricket-679.convex.cloud"
         : "https://deafening-puma-904.convex.cloud",
-      FREELLM_URL: isProd
-        ? "https://llm.codecolony.online/v1"
-        : "http://127.0.0.1:3001/v1",
-      FREELLM_MODEL_ID: "qwen/qwen3-coder:free",
-      FREELLM_API_KEY: alchemy.secret(process.env.FREELLM_API_KEY),
+      OPENROUTER_URL,
+      OPENROUTER_MODEL_ID,
+      OPENROUTER_API_KEY: alchemy.secret(process.env.OPENROUTER_API_KEY),
       SANDBOX_RUNNER_URL: sandboxRunnerUrl,
       SANDBOX_HMAC_KEY: alchemy.secret(process.env.SANDBOX_HMAC_KEY),
     },

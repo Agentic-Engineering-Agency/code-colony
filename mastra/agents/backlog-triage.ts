@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { freeLLMModelConfig } from "../llm";
+import { openRouterModelConfig } from "../llm";
 import { buildRunCommandTool, runCommandTool } from "../tools/runCommand";
 import { SandboxClient } from "../sandboxClient";
 
@@ -57,7 +57,7 @@ export const backlogTriageAgent = new Agent({
     "",
     "Be concise. Do not invent fields. Do not wrap output in code fences.",
   ].join("\n"),
-  model: freeLLMModelConfig(),
+  model: openRouterModelConfig(),
   tools: tools(),
 });
 

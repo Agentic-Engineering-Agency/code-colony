@@ -1,8 +1,7 @@
 /**
  * DNS stack. Owns the `codecolony.online` zone records for the Code Colony
- * deployment: landing page at the apex, TanStack Start app at `app`,
- * sandbox runner at `sandbox`, and the AGE-56 FreeLLMAPI tunnel placeholder
- * at `llm`.
+ * deployment: landing page at the apex (and `www`), TanStack Start app at
+ * `app`, sandbox runner at `sandbox`.
  *
  * Only runs for the `prod` stage. Preview stages use the per-PR
  * `*.workers.dev` and `*.pages.dev` URLs Cloudflare emits by default.
@@ -11,15 +10,18 @@
  *   - `CustomDomain` binds a Cloudflare Worker to a hostname. We use it for
  *     the app Worker and sandbox Worker.
  *   - `DnsRecords` writes raw zone records (CNAME, A, TXT). The landing page
- *     points at the existing Pages hostname, and the FreeLLMAPI tunnel is a
- *     CNAME to `<tunnel-id>.cfargotunnel.com`, so both go through
- *     `DnsRecords`.
+ *     points at the existing Pages hostname through `DnsRecords`.
  *
  * The `codecolony.online` zone is delegated to the Agentic Engineering
  * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). If the zone is
  * absent at deploy time, fall back to the emitted `*.workers.dev` /
  * `*.pages.dev` hostnames and skip this prod DNS stack until delegation
  * is restored.
+ *
+ * The previous AGE-56 `llm.codecolony.online` Cloudflare-Tunnel record is
+ * intentionally absent: we now call OpenRouter directly from the app
+ * Worker, so no self-hosted LLM endpoint needs to be reachable from
+ * Cloudflare's edge.
  */
 import { CustomDomain, DnsRecords } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
@@ -74,15 +76,4 @@ export async function dnsStack(
       workerName: args.sandbox.workerName,
     });
   }
-  await DnsRecords("freellm-tunnel", {
-    zone: ZONE,
-    records: [
-      {
-        type: "CNAME",
-        name: "llm",
-        content: "<TODO-AGE-56:tunnel-id>.cfargotunnel.com",
-        proxied: true,
-      },
-    ],
-  });
 }
