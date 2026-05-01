@@ -65,12 +65,6 @@ export async function dnsStack(
           content: args.landing.hostname,
           proxied: true,
         },
-        {
-          type: "CNAME",
-          name: "www",
-          content: args.landing.hostname,
-          proxied: true,
-        },
       ],
     });
   }
