@@ -32,7 +32,7 @@ import { secretsStack } from "./alchemy/secrets.ts";
 
 const stage = process.env.ALCHEMY_STAGE ?? "dev";
 
-const app = await alchemy("code-colony", {
+const app = await alchemy("code-colony-cf", {
   stage,
   password: process.env.ALCHEMY_PASSWORD,
   stateStore:
