@@ -92,16 +92,26 @@ describe("rejectionReason / isAllowed", () => {
     }
   });
 
-  it("rejects git diff --output= (write-capable flag bypass)", () => {
-    expect(isAllowed("git diff --output=/tmp/pwn", DEFAULT_ALLOWED_COMMANDS)).toBe(false);
-    const reason = rejectionReason("git diff --output=/tmp/pwn", DEFAULT_ALLOWED_COMMANDS);
-    expect(reason).toMatch(/--output= is not allowed/);
+  it("rejects git --output (=PATH and space-PATH bypass)", () => {
+    for (const cmd of [
+      "git diff --output=/tmp/pwn",
+      "git diff --output /tmp/pwn",
+    ]) {
+      expect(isAllowed(cmd, DEFAULT_ALLOWED_COMMANDS)).toBe(false);
+      const reason = rejectionReason(cmd, DEFAULT_ALLOWED_COMMANDS);
+      expect(reason).toMatch(/--output is not allowed/);
+    }
   });
 
-  it("rejects rg --pre= (arbitrary subprocess execution)", () => {
-    expect(isAllowed("rg hello --pre=touch .", DEFAULT_ALLOWED_COMMANDS)).toBe(false);
-    const reason = rejectionReason("rg hello --pre=touch .", DEFAULT_ALLOWED_COMMANDS);
-    expect(reason).toMatch(/--pre= is not allowed/);
+  it("rejects rg --pre (=CMD and space-CMD subprocess bypass)", () => {
+    for (const cmd of [
+      "rg hello --pre=touch .",
+      "rg hello --pre touch",
+    ]) {
+      expect(isAllowed(cmd, DEFAULT_ALLOWED_COMMANDS)).toBe(false);
+      const reason = rejectionReason(cmd, DEFAULT_ALLOWED_COMMANDS);
+      expect(reason).toMatch(/--pre is not allowed/);
+    }
   });
 
   it("does NOT include node --version in the default allow-list (--eval bypass)", () => {
