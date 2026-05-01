@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Attach codecolony.online as a custom domain to the Cloudflare Pages project
-# code-colony-landing. Idempotent: skips if the domain is already attached.
+# code-colony-landing. Idempotent: re-attaches/repairs if the domain is present
+# but not in a healthy verified state.
 #
 # Environment:
 #   CLOUDFLARE_ACCOUNT_ID  (required)
@@ -23,13 +24,28 @@ AUTH_HDR="Authorization: Bearer ${TOKEN}"
 
 echo "==> Checking existing domains on Pages project '${PROJECT}' ..."
 
-EXISTING=$(curl -sS -H "${AUTH_HDR}" \
-  "${API_BASE}/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT}/domains" \
-  | jq -r '.result[]?.domain // empty')
+# Fetch the existing domain entry once and inspect both name (canonical) and
+# status. The API response field is `.result[].name`; older docs reference
+# `.domain`, but the live shape is `name`. We accept either to be safe.
+EXISTING_JSON=$(curl -sS -H "${AUTH_HDR}" \
+  "${API_BASE}/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT}/domains")
 
-if echo "${EXISTING}" | grep -qxF "${DOMAIN}"; then
-  echo "==> Domain '${DOMAIN}' is already attached to '${PROJECT}'. Nothing to do."
-  exit 0
+EXISTING_ENTRY=$(echo "${EXISTING_JSON}" | jq -c \
+  --arg dom "${DOMAIN}" \
+  '.result[]? | select((.name // .domain) == $dom)')
+
+if [ -n "${EXISTING_ENTRY}" ]; then
+  STATUS=$(echo "${EXISTING_ENTRY}" | jq -r '.status // .verification_data.status // "unknown"')
+  echo "==> Domain '${DOMAIN}' already attached (status=${STATUS})."
+  case "${STATUS}" in
+    active|pending|verifying|ssl_pending|deployment_pending|initializing)
+      echo "==> Status is healthy/in-progress. Nothing to do."
+      exit 0
+      ;;
+    *)
+      echo "==> Status '${STATUS}' is not healthy; will attempt re-attach."
+      ;;
+  esac
 fi
 
 echo "==> Attaching '${DOMAIN}' to Pages project '${PROJECT}' ..."
@@ -60,6 +76,6 @@ echo "==> Cloudflare will provision the apex DNS record and TLS certificate auto
 echo "==> Current domains on '${PROJECT}':"
 curl -sS -H "${AUTH_HDR}" \
   "${API_BASE}/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT}/domains" \
-  | jq -r '.result[]?.domain // empty'
+  | jq -r '.result[]? | "\(.name // .domain // "?") (\(.status // "?"))"'
 
 exit 0
