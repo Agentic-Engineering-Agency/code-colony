@@ -29,6 +29,7 @@ export interface AppStackOutput {
 // separate sources of truth.
 const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
 const WRANGLER_COMPATIBILITY_DATE = "2026-04-29";
+const WRANGLER_COMPATIBILITY_FLAGS = ["nodejs_compat"] as const;
 const CLOUDFLARE_ACCOUNT_ID = "48f381bf59212dbd98d2b424ba4b9a04";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1";
 const OPENROUTER_MODEL_ID = "qwen/qwen3-coder:free";
@@ -48,6 +49,7 @@ export async function appStack(
     name: workerName,
     entrypoint: BUILT_WORKER_ENTRYPOINT,
     compatibilityDate: WRANGLER_COMPATIBILITY_DATE,
+    compatibilityFlags: WRANGLER_COMPATIBILITY_FLAGS,
     bindings: {
       CONVEX_URL: isProd
         ? "https://pastel-cricket-679.convex.cloud"
