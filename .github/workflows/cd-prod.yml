@@ -82,7 +82,28 @@ jobs:
 
       - name: Deploy Cloudflare infrastructure
         run: npm run iac:deploy -- --stage prod
+      - name: Attach apex domain to Pages project
+        run: |
+          chmod +x scripts/attach-pages-domain.sh
+          ./scripts/attach-pages-domain.sh codecolony.online
 
+      - name: Verify apex domain
+        # First Pages deploy of a new custom domain can take 30-90s for
+        # Cloudflare to issue the TLS cert; retry briefly. --fail-with-body
+        # makes curl exit non-zero on 4xx/5xx so the workflow surfaces real
+        # outages.
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail-with-body -sS -o /dev/null \
+                 -w 'HTTP %{http_code} (attempt '$attempt')\n' \
+                 https://codecolony.online/; then
+              exit 0
+            fi
+            echo "Apex not ready yet, sleeping..." >&2
+            sleep 15
+          done
+          echo "::error::Apex codecolony.online never returned 2xx after 6 attempts." >&2
+          exit 1
       - if: always() && env.SLACK_WEBHOOK_URL != ''
         name: Notify Slack
         run: |
