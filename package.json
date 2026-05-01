@@ -16,8 +16,8 @@
     "iac:diff": "alchemy diff",
     "iac:deploy": "alchemy deploy",
     "iac:destroy": "alchemy destroy",
-    "dev:tanstack": "vite dev --port 3001 --config vite.config.ts",
-    "build:tanstack": "vite build --config vite.config.ts"
+    "dev:tanstack": "vite dev --port 3001 --config vite.config.mts",
+    "build:tanstack": "vite build --config vite.config.mts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.54",

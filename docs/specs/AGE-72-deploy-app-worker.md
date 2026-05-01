@@ -20,14 +20,14 @@ Re-enable the TanStack Start app Worker in production by inserting a `vite build
 
 ### Build artifact path (deploy contract)
 
-The `@cloudflare/vite-plugin` running with `viteEnvironment: { name: "ssr" }` (see `vite.config.ts`) emits a Cloudflare Worker bundle for the SSR environment under the project's Vite `outDir`. The exact path is treated as a single source of truth in `alchemy/app.ts` and is captured by a constant added to that file:
+The `@cloudflare/vite-plugin` running with `viteEnvironment: { name: "ssr" }` (see `vite.config.mts`) emits a Cloudflare Worker bundle for the SSR environment under the project's Vite `outDir`. The exact path is treated as a single source of truth in `alchemy/app.ts` and is captured by a constant added to that file:
 
 ```ts
 // alchemy/app.ts (new constant; replaces WRANGLER_ENTRYPOINT at deploy time)
-const BUILT_WORKER_ENTRYPOINT = "dist/ssr/index.js";
+const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
 ```
 
-The exact filename emitted by `@cloudflare/vite-plugin@1.34.0` for the `ssr` environment is verified during Phase D against an actual `npm run build:tanstack` run on this worktree. If the emitted path differs (for example `dist/_worker.js` or `dist/ssr/_worker.js`), the constant is updated to match before the cd-prod step is wired. The constant is the only place the path appears; no string is duplicated in CI scripts, runbooks, or wrangler.jsonc.
+The exact filename emitted by `@cloudflare/vite-plugin@1.34.0` paired with `@tanstack/start-plugin-core@1.169.6` for the `ssr` environment is verified during Phase D against an actual `npm run build:tanstack` run on this worktree. The verified emit on this branch is `dist/server/index.mjs` (the SSR Vite environment writes its rolldown output to `dist/server/`, not `dist/ssr/` — the latter is only the *environment name*, not the on-disk folder). The constant is the only place the path appears; no string is duplicated in CI scripts, runbooks, or wrangler.jsonc.
 
 `wrangler.jsonc` `main` is intentionally left as `@tanstack/react-start/server-entry` so that local `wrangler dev` and `npm run dev:tanstack` continue to work against the virtual module. The deploy contract is asserted by alchemy, not wrangler.jsonc.
 
@@ -40,7 +40,7 @@ const WRANGLER_ENTRYPOINT = "@tanstack/react-start/server-entry";
 entrypoint: WRANGLER_ENTRYPOINT,
 
 // after (this PR)
-const BUILT_WORKER_ENTRYPOINT = "dist/ssr/index.js"; // verified in Phase D
+const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs"; // verified in Phase D
 // ...
 entrypoint: BUILT_WORKER_ENTRYPOINT,
 ```
@@ -69,8 +69,16 @@ No binding is added, removed, or renamed. The `alchemy.secret(...)` wrapper is m
 No new scripts. The existing `build:tanstack` is reused verbatim:
 
 ```bash
-npm run build:tanstack   # → vite build --config vite.config.ts
+npm run build:tanstack   # \u2192 vite build --config vite.config.mts
 ```
+
+### TanStack Start scaffolding completion (AGE-44 follow-through)
+
+AGE-44 (`docs/adr/0005-tanstack-start.md`) scaffolded `app/routes/__root.tsx`, `app/routes/index.tsx`, and `app/routeTree.gen.ts` but never produced the `app/router.tsx` entry that `@tanstack/start-plugin-core@1.169.6` requires (`node_modules/@tanstack/start-plugin-core/dist/esm/planning.js` line 63 \u2014 `defaultEntry: "router"`, `required: true`). AGE-72 is the first PR to actually run `vite build`, so it is also the first PR where the missing entry blocks anything; this PR adds it as the minimum scaffolding that lets `vite build` complete. The new file exports `getRouter()` (matching the `#tanstack-router-entry` contract used by `@tanstack/start-client-core/dist/esm/client/hydrateStart.js` line 5) and contains no app behavior \u2014 it only wires `routeTree` into `createRouter`.
+
+AGE-72 also corrects two pre-existing typos in the `tanstackStart(...)` plugin invocation in `vite.config.mts`: `routesDirectory` and `generatedRouteTree` were declared as `"app/routes"` / `"app/routeTree.gen.ts"`, but `@tanstack/start-plugin-core@1.169.6`'s `dist/esm/schema.js` line 43 resolves them via `path.resolve(root, srcDirectory, options.router.routesDirectory ?? "routes")` \u2014 i.e. relative to `srcDirectory` (`"app"`), not relative to the worktree root. The original strings double-prefixed to `app/app/routes` / `app/app/routeTree.gen.ts`, the route generator silently produced an empty manifest, and the SSR build crashed in `start-manifest-plugin` on `Object.entries(undefined)`. The corrected values are `"routes"` / `"routeTree.gen.ts"`; the resolved on-disk paths (`app/routes` / `app/routeTree.gen.ts`) are unchanged.
+
+Finally, `vite.config.ts` is renamed to `vite.config.mts` because Vite 8.0.10's Rolldown-based config loader (`node_modules/vite/dist/node/chunks/node.js` `isFilePathESM`, line 1769) treats a `.ts` config without `package.json#type="module"` as CommonJS and `require()`s its plugin imports. `@tanstack/react-start@1.167.51` is ESM-only, so the require throws \"This package is ESM only but it was tried to load by require\" before any plugin runs. The `.mts` extension forces ESM evaluation. The npm scripts (`dev:tanstack`, `build:tanstack`) and the legacy `app.config.ts` shim are updated to the new filename. `package.json` is *not* given `"type": "module"` because that would ripple into Next.js (out of AGE-72 scope; tracked under Out-of-scope follow-ups).
 
 ### CI step insertion (cd-prod.yml)
 
@@ -131,7 +139,7 @@ Build-time env never sees secrets. Deploy-time secrets are passed only to alchem
 
 ### AGE-72/S4 — Built artifact missing at deploy time
 
-- Given `npm run build:tanstack` succeeded but, due to a misconfigured `vite.config.ts` or a regression in `@cloudflare/vite-plugin`, no file exists at the path referenced by `BUILT_WORKER_ENTRYPOINT`.
+- Given `npm run build:tanstack` succeeded but, due to a misconfigured `vite.config.mts` or a regression in `@cloudflare/vite-plugin`, no file exists at the path referenced by `BUILT_WORKER_ENTRYPOINT`.
 - When `npm run iac:deploy -- --stage prod` runs immediately after.
 - Then `Worker("code-colony-app", { entrypoint: BUILT_WORKER_ENTRYPOINT, ... })` fails fast with an actionable error naming the missing path; the workflow exits non-zero before any DNS or domain step runs; `app.codecolony.online` continues to serve the previous Worker version. The remediation is to update `BUILT_WORKER_ENTRYPOINT` in `alchemy/app.ts` to match the path actually emitted, in a follow-up PR.
 
@@ -153,6 +161,7 @@ Build-time env never sees secrets. Deploy-time secrets are passed only to alchem
 - Bind a custom subdomain (for example `preview-<n>.app.codecolony.online`) for per-PR app previews so end-to-end auth/cookie testing works without the `*.workers.dev` quirks. Proposed title: `CC-DEPLOY-02 Per-PR app preview custom subdomain`.
 - Cache `dist/` between cd-preview runs of the same PR to cut build time; only worth doing once average build cost is measured. Proposed title: `CC-CI-04 Cache vite build artifact for cd-preview`.
 - Migrate `OPENROUTER_API_KEY` and `SANDBOX_HMAC_KEY` to Cloudflare Secrets Store once the deploy token is granted `Secrets Store: Edit`. Proposed title: `CC-SEC-01 Move app Worker secrets to Cloudflare Secrets Store`.
+- Consolidate the repo on `"type": "module"` in `package.json` so Vite/Rolldown does not need `.mts` to recognise the config as ESM. Doing so today would force a Next.js compatibility audit (Next config files, server actions, jest config) that is out of AGE-72 scope. Proposed title: `CC-INFRA-02 Move root package.json to type=module`.
 - Decide whether `Worker("code-colony-app", { adopt: true })` should be enabled to mirror the sandbox stack's `adopt: true`. Proposed title: `CC-DEPLOY-03 Adopt existing code-colony-app Worker resource in alchemy state`.
 
 ## Acceptance
@@ -165,10 +174,10 @@ npm run lint
 npm run typecheck
 npm test
 npm run build:tanstack
-ls dist/ssr/index.js   # confirms the path BUILT_WORKER_ENTRYPOINT references
+ls dist/server/index.mjs   # confirms the path BUILT_WORKER_ENTRYPOINT references
 ```
 
-The final `ls` confirms the `BUILT_WORKER_ENTRYPOINT` constant matches reality on this branch. If the file lives at a different path, update the constant before opening the PR rather than guessing — the path is the deploy contract. Phase D verification item: capture the exact emitted filename on a clean `npm run build:tanstack` run on this worktree (no `dist/` present beforehand) and compare against `BUILT_WORKER_ENTRYPOINT` in `alchemy/app.ts`. If `@cloudflare/vite-plugin@1.34.0` emits to `dist/_worker.js`, `dist/ssr/_worker.js`, or any path other than `dist/ssr/index.js`, the constant is updated and re-verified before merge.
+The final `ls` confirms the `BUILT_WORKER_ENTRYPOINT` constant matches reality on this branch. If the file lives at a different path, update the constant before opening the PR rather than guessing \u2014 the path is the deploy contract. Phase D verification item: capture the exact emitted filename on a clean `npm run build:tanstack` run on this worktree (no `dist/` present beforehand) and compare against `BUILT_WORKER_ENTRYPOINT` in `alchemy/app.ts`. The verified path on this branch is `dist/server/index.mjs`; if `@cloudflare/vite-plugin@1.34.0` paired with `@tanstack/start-plugin-core@1.169.6` emits to a different path on a future bump, update the constant and re-verify before merge.
 
 ### CI assertions
 
