@@ -96,6 +96,7 @@ jobs:
         run: npm run iac:deploy -- --stage "$ALCHEMY_STAGE"
 
       - name: Comment preview URLs
+        continue-on-error: true
         run: |
           if [ "${{ steps.deploy-secrets.outputs.ready }}" = "true" ]; then
             cat > /tmp/code-colony-preview.md <<EOF

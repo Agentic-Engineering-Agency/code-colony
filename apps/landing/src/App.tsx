@@ -58,9 +58,9 @@ export function App() {
     <>
       <TopNav onWaitlist={() => setWaitlistOpen(true)} />
       {tw.tickerOn && <StatusTicker />}
-      <a id="top"></a>
+      <div id="top" aria-hidden="true" />
       <section className="hero" id="hero">
-        <div className="hero-bg"></div>
+        <div className="hero-bg" aria-hidden="true" />
         <div className="container">
           <Hero
             headline={tw.headline}

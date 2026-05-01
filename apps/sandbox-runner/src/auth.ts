@@ -19,6 +19,26 @@ const ENCODER = new TextEncoder();
 export const TIMESTAMP_HEADER = "x-sandbox-ts";
 export const SIGNATURE_HEADER = "x-sandbox-sig";
 export const DEFAULT_SKEW_MS = 5 * 60 * 1000;
+export const MAX_BODY_BYTES = 1 * 1024 * 1024;
+
+
+const keyCache = new Map<string, CryptoKey>();
+
+async function importKeyCached(secret: string): Promise<CryptoKey> {
+  let key = keyCache.get(secret);
+  if (!key) {
+    key = await crypto.subtle.importKey(
+      "raw",
+      ENCODER.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    keyCache.set(secret, key);
+  }
+  return key;
+}
+
 
 export interface VerifyHmacOptions {
   /** Time source, defaults to `Date.now`. Injected for testing. */
@@ -41,13 +61,7 @@ export async function signHmac(
   body: string,
   secret: string,
 ): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    ENCODER.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  const key = await importKeyCached(secret);
   const sig = await crypto.subtle.sign(
     "HMAC",
     key,
@@ -55,6 +69,8 @@ export async function signHmac(
   );
   return bytesToHex(new Uint8Array(sig));
 }
+
+
 
 /**
  * Validate the auth headers on a Worker request. Returns the consumed body on
@@ -82,7 +98,21 @@ export async function verifyHmac(
     return { ok: false, error: "timestamp expired", status: 401 };
   }
 
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && Number.parseInt(contentLength, 10) > MAX_BODY_BYTES) {
+    return { ok: false, error: "body too large", status: 413 };
+  }
+
   const body = await request.text();
+  // body.length counts UTF-16 code units; a body containing multi-byte
+  // characters can fool that check while still exceeding MAX_BODY_BYTES on
+  // the wire. TextEncoder gives us the actual UTF-8 byte length.
+  const bodyBytes = new TextEncoder().encode(body).byteLength;
+  if (bodyBytes > MAX_BODY_BYTES) {
+    return { ok: false, error: "body too large", status: 413 };
+  }
+
+
   const expected = await signHmac(timestamp, body, secret);
   if (!constantTimeEqualHex(expected, signature)) {
     return { ok: false, error: "invalid signature", status: 401 };

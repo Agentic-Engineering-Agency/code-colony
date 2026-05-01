@@ -43,6 +43,8 @@ describe("triage route core", () => {
   it("isBacklogIssueLike validates required fields", () => {
     expect(isBacklogIssueLike(sampleIssue)).toBe(true);
     expect(isBacklogIssueLike({ ...sampleIssue, id: 42 })).toBe(false);
+    expect(isBacklogIssueLike({ ...sampleIssue, source: 42 })).toBe(false);
+    expect(isBacklogIssueLike({ ...sampleIssue, externalRef: 42 })).toBe(false);
     expect(isBacklogIssueLike(null)).toBe(false);
   });
 

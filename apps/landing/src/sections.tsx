@@ -814,7 +814,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="../design-system.html">Design system</a>
+                <a href="docs/design/design-system.html">Design system</a>
               </li>
               <li>
                 <a href="#faq">FAQ</a>

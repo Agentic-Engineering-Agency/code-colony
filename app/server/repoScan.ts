@@ -22,7 +22,7 @@ const REPO_SCAN_TTL_MS = 3_000;
 const repoScanMemo = createKeyedTtlMemo<string, RepoRouteResponse>(
   (key) =>
     runRepoScanRequest({
-      searchParams: new URLSearchParams(key === "__default__" ? "" : `cwd=${key}`),
+      searchParams: new URLSearchParams(key === "__default__" ? undefined : { cwd: key }),
       data: demoData,
     }),
   { ttlMs: REPO_SCAN_TTL_MS },

@@ -120,6 +120,9 @@ jobs:
         run: |
           if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "::error::CONVEX_DEPLOY_KEY missing on push to main — convex leg cannot run."
+            exit 1
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CONVEX_DEPLOY_KEY not configured (e.g. fork PR); skipping convex leg with success."

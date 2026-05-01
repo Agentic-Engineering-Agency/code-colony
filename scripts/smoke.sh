@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AGE-62 smoke tests: exercise each Convex Component end-to-end against the
 # dev deployment. Run after `npx convex dev --once` succeeds.
-set -e
+set -euo pipefail
 cd "$(dirname "$0")/.."
 
 run() { printf '\n== %s ==\n' "$1"; npx convex run "$@" 2>&1 | tail -5; }
