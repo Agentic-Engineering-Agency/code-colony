@@ -69,7 +69,7 @@ jobs:
 
       - if: steps.convex-secret.outputs.ready == 'true'
         name: Deploy Convex preview
-        run: npx convex preview deploy --preview-name "$PREVIEW_NAME"
+        run: npx convex deploy --preview-name "$PREVIEW_NAME"
 
       - id: deploy-secrets
         name: Detect Cloudflare deploy secrets
