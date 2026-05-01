@@ -104,7 +104,11 @@ export async function verifyHmac(
   }
 
   const body = await request.text();
-  if (body.length > MAX_BODY_BYTES) {
+  // body.length counts UTF-16 code units; a body containing multi-byte
+  // characters can fool that check while still exceeding MAX_BODY_BYTES on
+  // the wire. TextEncoder gives us the actual UTF-8 byte length.
+  const bodyBytes = new TextEncoder().encode(body).byteLength;
+  if (bodyBytes > MAX_BODY_BYTES) {
     return { ok: false, error: "body too large", status: 413 };
   }
 
