@@ -20,6 +20,7 @@ jobs:
       ALCHEMY_STATE_TOKEN: ${{ secrets.ALCHEMY_STATE_TOKEN }}
       SANDBOX_HMAC_KEY: ${{ secrets.SANDBOX_HMAC_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +60,16 @@ jobs:
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CONVEX_DEPLOY_KEY not configured; skipping Convex prod deploy."
+          fi
+
+      - if: steps.convex-secret.outputs.ready == 'true'
+        name: Set Convex prod env vars
+        run: |
+          npx convex env set SITE_URL https://app.codecolony.online
+          if [ -n "${BETTER_AUTH_SECRET:-}" ]; then
+            npx convex env set BETTER_AUTH_SECRET "$BETTER_AUTH_SECRET"
+          else
+            echo "::warning::BETTER_AUTH_SECRET not set; better-auth will fail at runtime."
           fi
 
       - if: steps.convex-secret.outputs.ready == 'true'
