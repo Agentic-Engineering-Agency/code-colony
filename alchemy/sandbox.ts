@@ -39,6 +39,7 @@ export async function sandboxStack(
     },
     instanceType: "standard-2",
     maxInstances: isProd ? 5 : 2,
+    adopt: true,
   });
 
   const sandboxDO = await DurableObjectNamespace(`${workerName}-sandbox-do`, {
@@ -51,6 +52,7 @@ export async function sandboxStack(
     entrypoint: "apps/sandbox-runner/src/index.ts",
     compatibilityDate: "2026-04-29",
     compatibilityFlags: ["nodejs_compat"],
+    adopt: true,
     bindings: {
       // The Container resource (sandboxImage) is bound to the DO namespace at
       // the platform level via [[containers]] class_name="Sandbox", not as a
