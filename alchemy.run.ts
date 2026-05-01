@@ -23,11 +23,11 @@
  *   already covers the local dev path; CI uses a scoped service token.
  */
 import alchemy from "alchemy";
-import { landingStack } from "./alchemy/landing.js";
-import { sandboxStack } from "./alchemy/sandbox.js";
-import { appStack } from "./alchemy/app.js";
-import { dnsStack } from "./alchemy/dns.js";
-import { secretsStack } from "./alchemy/secrets.js";
+import { landingStack } from "./alchemy/landing.ts";
+import { sandboxStack } from "./alchemy/sandbox.ts";
+import { appStack } from "./alchemy/app.ts";
+import { dnsStack } from "./alchemy/dns.ts";
+import { secretsStack } from "./alchemy/secrets.ts";
 
 const stage = process.env.ALCHEMY_STAGE ?? "dev";
 
