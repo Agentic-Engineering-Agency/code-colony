@@ -72,19 +72,43 @@ jobs:
         name: Deploy Convex preview
         run: npx convex preview deploy --preview-name "$PREVIEW_NAME"
 
-      - name: Install Alchemy for deploy
+      - id: deploy-secrets
+        name: Detect Cloudflare deploy secrets
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN ALCHEMY_PASSWORD ALCHEMY_STATE_TOKEN SANDBOX_HMAC_KEY FREELLM_API_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::notice::${name} not configured; preview infrastructure deploy will be skipped."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.deploy-secrets.outputs.ready == 'true'
+        name: Install Alchemy for deploy
         run: npm install --no-save alchemy
 
-      - name: Deploy Cloudflare preview infrastructure
+      - if: steps.deploy-secrets.outputs.ready == 'true'
+        name: Deploy Cloudflare preview infrastructure
         run: npm run iac:deploy -- --stage "$ALCHEMY_STAGE"
 
       - name: Comment preview URLs
         run: |
-          cat > /tmp/code-colony-preview.md <<EOF
+          if [ "${{ steps.deploy-secrets.outputs.ready }}" = "true" ]; then
+            cat > /tmp/code-colony-preview.md <<EOF
           Code Colony preview deployed for ${ALCHEMY_STAGE}.
 
           - App Worker: https://${ALCHEMY_STAGE}-code-colony-app.${CLOUDFLARE_ACCOUNT_ID}.workers.dev
           - Sandbox Worker: https://${ALCHEMY_STAGE}-code-colony-sandbox-runner.${CLOUDFLARE_ACCOUNT_ID}.workers.dev
           - Convex preview: ${PREVIEW_NAME}
           EOF
+          else
+            cat > /tmp/code-colony-preview.md <<EOF
+          Code Colony preview infrastructure was skipped for ${ALCHEMY_STAGE} because one or more deployment secrets are not configured for this workflow run.
+          EOF
+          fi
           gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/code-colony-preview.md

@@ -23,6 +23,7 @@
  *   already covers the local dev path; CI uses a scoped service token.
  */
 import alchemy from "alchemy";
+import { CloudflareStateStore } from "alchemy/state";
 import { landingStack } from "./alchemy/landing.ts";
 import { sandboxStack } from "./alchemy/sandbox.ts";
 import { appStack } from "./alchemy/app.ts";
@@ -34,6 +35,10 @@ const stage = process.env.ALCHEMY_STAGE ?? "dev";
 const app = await alchemy("code-colony", {
   stage,
   password: process.env.ALCHEMY_PASSWORD,
+  stateStore:
+    process.env.ALCHEMY_STATE_STORE === "cloudflare"
+      ? (scope) => new CloudflareStateStore(scope)
+      : undefined,
 });
 
 // Stacks intentionally compose top-down so the secrets stack runs first and
