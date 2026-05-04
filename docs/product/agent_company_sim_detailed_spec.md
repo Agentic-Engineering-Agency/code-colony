@@ -1,7 +1,10 @@
 # Agentic Company Sim — PRD + Technical Architecture
 
+
 ## Document Status
-## Document Status
+
+**Status:** Living Document (last updated 2026-05-04)
+
 
 **Status:** Living Document (last updated 2026-05-04)
 **Primary audience:** Agentic Engineering founding/product/engineering team
