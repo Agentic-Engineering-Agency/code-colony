@@ -51,7 +51,7 @@ The following ADRs have been accepted since the MVP:
 | Next.js app | real | MVP | Local dev on port 3000; current primary UI |
 | TanStack Start scaffold | real | ADR 0005 / AGE-44 | Parallel coexistence; `npm run dev:tanstack` on port 3001 |
 | TanStack Start deploy | real | AGE-72 | App Worker deployed to `app.codecolony.online` |
-| Convex schema + seed | real | ADR 0004 / AGE-62 | 21 components mounted; seed mutation idempotent |
+| Convex schema + seed | real | ADR 0004 / AGE-62 | 20 components mounted; seed mutation idempotent |
 | Convex frontend queries | not started | AGE-44b | Migration arc pending Next.js → TanStack Start cutover |
 | Alchemy IaC (prod) | real | ADR 0002 / AGE-58 | DNS, landing Pages, sandbox-runner, app Worker all deployed |
 | Sandbox-runner Worker | real | ADR 0001 / AGE-49 | HMAC auth, `exec` + `git-clone` endpoints; Container DO with `max_instances=5` |

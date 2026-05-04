@@ -57,7 +57,7 @@ npm run lint && npm run typecheck && npm test && npm run build
 
 - **Next.js** (`app/`) — current primary app surface; runs locally on port 3000.
 - **TanStack Start** (`app/routes/`, `vite.config.mts`) — coexists alongside Next.js per ADR 0005; future primary app surface once the client cutover completes. Runs on port 3001 via `npm run dev:tanstack`.
-- **Convex backend** (`convex/`) — full schema + 21 mounted components (ADRs 0004 and 0006); seed mutation ready; frontend queries/mutations migration pending.
+- **Convex backend** (`convex/`) — full schema + 20 mounted components (ADRs 0004 and 0006); seed mutation ready; frontend queries/mutations migration pending.
 - **Alchemy IaC** (`alchemy/`, `alchemy.run.ts`) — production DNS, landing Pages, sandbox-runner Worker, and app Worker all deployed via `npm run iac:deploy`.
 - **Mastra agent layer** (`mastra/`) — configured with OpenRouter; `backlogTriageAgent` is real but the `runCommand` tool is stubbed until AGE-55 lands.
 - **Cloudflare Sandbox SDK** (`apps/sandbox-runner/`) — ADR 0001; Container-backed Durable Object with `max_instances=5`; Dockerfile is a placeholder pending SDK runtime image (CC-SBX-03).

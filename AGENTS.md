@@ -20,7 +20,7 @@ Code Colony is a Next.js + React + TypeScript prototype for a multiplayer AI com
 - Runtime execution, artifact diffs, tests, cost ledger, marketplace installs, memory providers, and multiplayer behavior are mock/demo data in the MVP. Keep simulated behavior visibly labeled in UI copy.
 - Design choice from docs: React/CSS world map now; PixiJS is a future rendering adapter. Seeded mock data is shaped for a future Convex replacement.
 - **TanStack Start parallel coexistence** (ADR 0005): `app/routes/__root.tsx` and `app/routes/index.tsx` render the same `CodeColonyApp` component. `vite.config.mts` builds the TanStack Start surface on port 3001. Default `npm run dev` / `build` still targets Next.js until AGE-44b cuts over the client.
-- **Convex migration arc**: schema is ready, 21 components are mounted (ADRs 0004 and 0006), and `convex/seed.ts` idempotently upserts `demoData`. Frontend reads/writes through Convex queries/mutations are pending.
+- **Convex migration arc**: schema is ready, 20 components are mounted (ADRs 0004 and 0006), and `convex/seed.ts` idempotently upserts `demoData`. Frontend reads/writes through Convex queries/mutations are pending.
 
 ## Key Directories
 

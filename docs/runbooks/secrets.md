@@ -29,8 +29,8 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 
 | File | Surface | Required variables |
 | --- | --- | --- |
-| `.env.local` (repo root) | Next.js + Convex dev | `CONVEX_DEPLOYMENT` (e.g., `https://<name>.convex.cloud`) |
-| `.dev.vars` (repo root) | sandbox-runner local dev | `SANDBOX_HMAC_KEY` |
+| `.env.local` (repo root) | Next.js + Convex dev | `CONVEX_DEPLOYMENT` (deployment slug, e.g. `code-colony-prod`) |
+| `.dev.vars` (`apps/sandbox-runner/`) | sandbox-runner local dev | `SANDBOX_HMAC_KEY` |
 
 Both files are gitignored. `SANDBOX_HMAC_KEY` can also be set via `wrangler secret put SANDBOX_HMAC_KEY` for remote deploys; `.dev.vars` is the local-only shortcut.
 

@@ -104,7 +104,7 @@ at module load time.
 - `npm install --legacy-peer-deps` succeeds for all ten new packages.
 - `npm run lint`, `npm run typecheck`, and `npm test` pass (root tsconfig
   excludes `convex/` so missing `_generated` symbols are non-blocking).
-- `npx convex dev --once` mounts all 21 components cleanly once env vars are
+- `npx convex dev --once` mounts all 20 components cleanly once env vars are
   set (or stubs fall back safely when unset).
 
 ## Open follow-ups
