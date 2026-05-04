@@ -117,20 +117,17 @@ management without disruption. Every other resource is created fresh.
 
 ## Verification
 
-This PR scaffolds the directory and wires the entrypoint, but it does
-**not** invoke `alchemy deploy` against the live account — we want the
-secrets pipeline (AGE-57) and the prod Convex deployment (AGE-61) to land
-first so the first managed apply does not race the manual surface.
+This PR originally scaffolded the directory without invoking `alchemy deploy` against the live account. That deferral ended with AGE-57 (CD workflow wiring) and AGE-72 (app stack deploy). Today `npm run iac:deploy -- --stage prod` is exercised by `cd-prod.yml` on every push to `main`.
 
 Smoke verification:
 
 ```
-npm run iac:diff         # ✓ Alchemy reads alchemy.run.ts and prints "no changes"
+npm run iac:diff         # Alchemy reads alchemy.run.ts and prints the resource graph
 npm run iac:deploy --dry-run
-                         # ✓ Resolves resource graph without touching Cloudflare
+                         # Resolves resource graph without touching Cloudflare
 ```
 
-(Live `alchemy deploy` deferred to AGE-57's CD wiring.)
+Live deploy is gated by GitHub Actions secrets and runs automatically on `main`.
 
 ## Open follow-ups
 
@@ -144,3 +141,12 @@ npm run iac:deploy --dry-run
   needs the real Cloudflare Tunnel UUID once the tunnel is created.
 - App stack: `alchemy/app.ts` is intentionally not in this PR — AGE-46
   picks the Workers hosting model first.
+
+## Status update (2026-05-04)
+
+- AGE-57 (CD workflow wiring) — Done. `cd-prod.yml`, `cd-preview.yml`, and `cd-preview-cleanup.yml` all invoke `npm run iac:deploy`.
+- AGE-59 (`alchemy/landing.ts` adoption) — Done. `code-colony-landing` Pages project is adopted and managed.
+- AGE-56 (tunnel UUID) — Done. Placeholder removed; tunnel created and wired.
+- AGE-72 (app stack) — Done. `alchemy/app.ts` is deployed and serving `https://app.codecolony.online`.
+
+See `docs/adr/STATUS.md` for the full follow-up registry.

@@ -131,3 +131,19 @@ at module load time.
 - AGE-63+: update `convex/rateLimiter.ts` with new rate-limit names suggested
   by `@convex-dev/agent` (agent interactions) and `convex-webhook-sender`
   (webhook delivery) if needed.
+
+## Status update (2026-05-04)
+
+All AGE-63+ follow-ups remain Open. The ten new components are mounted and `npx convex dev --once` succeeds, but no wrapper file has been wired to product behavior yet:
+
+- `dodopayments` — schema not created; no customer → payment mapping.
+- `resend` — still in `testMode`; webhook endpoint not configured.
+- `agent-ready` — config not scaffolded; `llms.txt` not served.
+- `steel` — no API key provisioned; no browser-automation action.
+- `orchestrator` — mounted experimentally; `exposeApi()` not evaluated.
+- `webhookSender` — not wired to any event source.
+- `timeline` — not integrated into agent draft flow.
+- `debouncer` — not added to triage pipeline.
+- `llmCache` — not wired into Mastra LLM calls.
+
+See `docs/adr/STATUS.md` for the full follow-up registry.

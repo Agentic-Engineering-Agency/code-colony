@@ -112,6 +112,15 @@ source of truth.
   (TanStack issues #5704, #6381) do not affect any of the five cores we
   ported; revisit before adding upload endpoints.
 
+## Status update (2026-05-04)
+
+- Phase 1 (scaffold) — Done. `vite.config.mts`, `app/routes/__root.tsx`, `app/routes/index.tsx`, and server function wrappers are all in place.
+- AGE-72 (build + deploy TanStack Start app Worker) — Done. `feat/age-72-deploy-app-worker` (#89) added `app/router.tsx`, corrected `vite.config.mts` plugin options, and wired `alchemy/app.ts` + `cd-prod.yml` so `https://app.codecolony.online` serves the TanStack Start app.
+- AGE-44b (client cutover) — Open. Next.js `app/page.tsx` still owns the primary route; no `useServerFn`/`useQuery` migration has started.
+- AGE-44c (drop Next.js) — Open. `next.config.mjs`, `next-env.d.ts`, and `eslint-config-next` still present.
+
+See `docs/adr/STATUS.md` for the full follow-up registry.
+
 ## References
 
 - Skill: `tanstack-start` (verified 2026-01-21, expanded April 2026).

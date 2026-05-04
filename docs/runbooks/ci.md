@@ -116,3 +116,18 @@ fails the required check `ci`.
 Deployment is **not** part of `ci.yml`. Deploys live in `cd-*.yml` workflows
 (see CC-CI-02). Do not add `wrangler deploy` (without `--dry-run`),
 `vercel deploy`, or `convex deploy` here.
+
+## Troubleshooting
+
+| Failure | Cause | Fix |
+| --- | --- | --- |
+| **convex leg fails with "No CONVEX_DEPLOYMENT set"** | `CONVEX_DEPLOY_KEY` secret is absent (fork PR or missing configuration). | Expected on fork PRs — the leg skips with success. For internal PRs, verify the secret is set in repo settings. Post-merge `push` to `main` is the backstop. |
+| **sandbox leg fails on Docker probe** | Wrangler 4.87+ streams the Dockerfile to docker stdin even on `--dry-run`; CI has no Docker daemon. | The fake-docker shim (`WRANGLER_DOCKER_BIN: /tmp/fake-docker.sh`) handles this. If the shim is missing, check the "Install fake docker shim" step in `ci.yml`. |
+| **landing leg skipped** | `apps/landing/package.json` is absent on the branch. | Expected when the landing app does not exist on a feature branch. Once merged to `main`, the leg activates automatically. |
+| **Missing TanStack Start build leg** | `ci.yml` intentionally does not build the TanStack Start surface on PR. | This is tracked as CC-CI-03. Regressions are caught at `cd-prod` time. Run `npm run build:tanstack` locally before opening PRs that touch `app/routes/` or `vite.config.mts`. |
+
+## Related runbooks
+
+- Rollback: `docs/runbooks/rollback.md`
+- Secrets: `docs/runbooks/secrets.md`
+- IaC architecture: `docs/adr/0002-iac-alchemy.md`

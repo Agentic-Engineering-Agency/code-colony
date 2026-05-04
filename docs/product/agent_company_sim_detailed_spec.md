@@ -1,16 +1,32 @@
 # Agentic Company Sim — PRD + Technical Architecture
 
 ## Document Status
+## Document Status
 
-**Status:** Draft v0.1  
-**Primary audience:** Agentic Engineering founding/product/engineering team  
-**Primary use:** Align product direction, define MVP scope, and guide first implementation milestones  
-**Current priority:** Build a narrow vertical slice proving project-world generation, multiplayer governance, and a small spec-to-diff preview.
+**Status:** Living Document (last updated 2026-05-04)
+**Primary audience:** Agentic Engineering founding/product/engineering team
+**Primary use:** Align product direction, define MVP scope, and guide implementation milestones
+**Current priority:** Post-MVP architecture expansion (Convex Components, TanStack Start, Alchemy IaC, sandbox runner).
+
+## Implementation Delta (as of 2026-05-04)
+
+| Spec item | Status | Evidence |
+| --- | --- | --- |
+| Convex schema + seed | Built | `convex/schema.ts`, `convex/seed.ts` — 21 components mounted |
+| Repo scan table + seed data | Built | `repoScans` table in schema; live pipeline stubbed |
+| Multiplayer spec approval flow | Partially built | Local state only; Convex-backed votes pending |
+| Basic marketplace/loadout registry | Built (UI) | Browseable in `CodeColonyApp`; real installs mocked |
+| Spec-to-diff preview | Built (simulated) | `src/domain/demoData.ts` seeded scenario |
+| Oh My Pi runtime execution | Mocked | Simulated event log and diff; real sandbox pending AGE-55 |
+| Company onboarding wizard | Not started | — |
+| PixiJS world map | Deferred | React/CSS map is the accepted MVP surface |
+| Honcho memory integration | Not started | Convex `memories` table is real; Honcho not wired |
+| Cloudflare sandbox experiment | Built (scaffold) | `apps/sandbox-runner/` — HMAC auth, Container DO |
+| Mastra workflow prototype | Partially built | `backlogTriageAgent` configured; `runCommand` stubbed |
 
 ---
 
 # Part I — Product Requirements Document
-
 ---
 
 # 1. Product Overview
@@ -584,22 +600,22 @@ Job failure must produce actionable failure artifacts and, when appropriate, inc
 
 ## 6.1 MVP Must-Haves
 
-1. Company onboarding wizard.
-2. Project world creation via repo scan + AI interview + manual edits.
-3. PixiJS hybrid graph/isometric world map.
-4. Convex-backed project world state.
-5. Multiplayer spec approval flow.
-6. Sisyphus narrator feed.
-7. Sisyphus advisor panel.
-8. Sisyphus world annotations.
-9. Basic persistent agent model.
-10. Basic marketplace/loadout registry.
-11. Spec-first feature job.
-12. Artifact bundle review.
-13. Convex memory ledger.
-14. Honcho contextual memory integration.
-15. Skill update proposal model.
-16. Oh My Pi or simulated spec-to-diff preview.
+1. ~~Company onboarding wizard.~~ — Not started (post-MVP).
+2. Project world creation via repo scan + AI interview + manual edits. — Partially built: `repoScans` table + seed data exist; live scan pipeline stubbed.
+3. ~~PixiJS hybrid graph/isometric world map.~~ — Deferred; React/CSS map is the accepted MVP surface.
+4. Convex-backed project world state. — Built: full schema + 21 components mounted; frontend migration pending AGE-44b.
+5. Multiplayer spec approval flow. — Partially built: local state works; Convex-backed votes pending.
+6. ~~Sisyphus narrator feed.~~ — Not started.
+7. ~~Sisyphus advisor panel.~~ — Not started.
+8. ~~Sisyphus world annotations.~~ — Not started.
+9. Basic persistent agent model. — Built: seeded agents with trust, reputation, skills, loadouts in `demoData`.
+10. Basic marketplace/loadout registry. — Built (UI): browseable; real installs mocked.
+11. Spec-first feature job. — Built: seeded spec + job flow in local state.
+12. Artifact bundle review. — Built (simulated): seeded artifact with diff and verdicts.
+13. Convex memory ledger. — Built: `memories` table + seed data; UI browseable.
+14. ~~Honcho contextual memory integration.~~ — Not started; Convex `memories` table is the current surface.
+15. Skill update proposal model. — Built (UI): seeded proposals; real eval pipeline not started.
+16. Oh My Pi or simulated spec-to-diff preview. — Built (simulated): event log, diff, checks are demo data.
 
 ## 6.2 MVP Should-Haves
 
@@ -1765,31 +1781,49 @@ Build:
 
 # 19. Open Technical Questions
 
-1. Can Cloudflare Sandboxes/Containers reliably host Oh My Pi runtime sessions?
-2. Should Convex remain primary if Cloudflare Durable Objects handle multiplayer coordination?
-3. What is the minimum viable Honcho integration for V1?
-4. Should repo scanning happen locally, in Convex action, in Cloudflare sandbox, or in external worker?
-5. How should runtime workers authenticate back to Convex?
-6. How should artifacts be stored across Convex, R2, and local development?
-7. What are the minimum Pi hooks/tools required for spec-to-diff preview?
-8. How do we safely run user repos in hosted sandboxes?
-9. What is the MVP package manifest format?
-10. How strict should executable marketplace package review be in private/team contexts?
+1. Can Cloudflare Sandboxes/Containers reliably host Oh My Pi runtime sessions?  
+   **Status:** partially answered — ADR 0001 adopted Sandbox SDK; `apps/sandbox-runner/` scaffolded with HMAC auth and Container DO. Real Oh My Pi sessions pending AGE-55.
+2. Should Convex remain primary if Cloudflare Durable Objects handle multiplayer coordination?  
+   **Status:** answered — Convex remains primary for data + workflows; Durable Objects used only for sandbox Containers. ADR 0004 + 0006.
+3. What is the minimum viable Honcho integration for V1?  
+   **Status:** still open — Convex `memories` table is the current surface; Honcho integration not started.
+4. Should repo scanning happen locally, in Convex action, in Cloudflare sandbox, or in external worker?  
+   **Status:** partially answered — `repoScans` table + seed data exist; live scan likely runs in sandbox runner (AGE-55).
+5. How should runtime workers authenticate back to Convex?  
+   **Status:** answered — App Worker binds `CONVEX_URL` literal via Alchemy; no additional auth layer needed for public read queries.
+6. How should artifacts be stored across Convex, R2, and local development?  
+   **Status:** partially answered — `@convex-dev/r2` component mounted; `r2Assets` table indexes keys. Real upload pipeline pending AGE-63+.
+7. What are the minimum Pi hooks/tools required for spec-to-diff preview?  
+   **Status:** still open — simulated preview uses hardcoded demo data; real tool set to be defined once AGE-55 lands.
+8. How do we safely run user repos in hosted sandboxes?  
+   **Status:** partially answered — HMAC auth + replay-window validation in `apps/sandbox-runner/`. Command allow-listing and container hardening tracked in CC-SBX-03.
+9. What is the MVP package manifest format?  
+   **Status:** still open — `marketplacePackages` schema exists but no real package registry integration.
+10. How strict should executable marketplace package review be in private/team contexts?  
+   **Status:** still open — no real marketplace install flow exists yet.
 
 ---
 
 # 20. Recommended Immediate Next Steps
 
-1. Create Convex schema draft for core tables.
-2. Build static PixiJS project map prototype with mock regions/rooms/agents.
-3. Implement company onboarding wizard.
-4. Implement repo structure ingestion using a mocked/sample repo tree.
-5. Implement generated project world draft.
-6. Implement multiplayer approval request model.
-7. Implement spec editor and spec approval flow.
-8. Implement artifact bundle schema and review panel.
-9. Implement local/simulated runtime worker protocol.
-10. Integrate Honcho behind memory provider interface.
+1. ~~Create Convex schema draft for core tables.~~ — Done. See `convex/schema.ts`.
+2. ~~Build static PixiJS project map prototype with mock regions/rooms/agents.~~ — Deferred; React/CSS map is the accepted MVP surface.
+3. ~~Implement company onboarding wizard.~~ — Not started; post-MVP (AGE-63+).
+4. Implement repo structure ingestion using a mocked/sample repo tree. — Partially done: `repoScans` table + seed data exist; live pipeline stubbed (AGE-55).
+5. Implement generated project world draft. — Partially done: seeded world in `demoData`; generation from live scan pending.
+6. Implement multiplayer approval request model. — Partially done: local state works; Convex-backed votes pending (AGE-44b).
+7. ~~Implement spec editor and spec approval flow.~~ — Done: local spec approval flow works in `CodeColonyApp`.
+8. ~~Implement artifact bundle schema and review panel.~~ — Done: seeded artifact with diff and verdicts; UI reviewable.
+9. Implement local/simulated runtime worker protocol. — Done (simulated): `demoData` provides event log and diff. Real runtime pending AGE-55.
+10. ~~Integrate Honcho behind memory provider interface.~~ — Not started; Convex `memories` table is the current surface.
+
+Additional post-MVP steps:
+
+- AGE-44b: TanStack Start client cutover (replace Next.js fetch with `useServerFn`/`useQuery`).
+- AGE-55: Wire Mastra `runCommand` tool to live sandbox-runner.
+- AGE-63+: Billing/orchestration/email component wiring (Dodo Payments, Resend, Steel, webhooks).
+- AGE-53: Landing page video URL + waitlist wiring to Convex mutation.
+- AGE-50: Landing page sign-up calling `waitlist.join` from the browser.
 
 The highest-leverage first build target is:
 

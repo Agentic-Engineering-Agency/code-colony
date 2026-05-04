@@ -40,7 +40,11 @@ Set it locally with `wrangler secret put SANDBOX_HMAC_KEY` before running `wrang
 - `[[containers]] class_name = "Sandbox" image = "./Dockerfile"` with `instance_type = "standard-2"` and `max_instances = 5`.
 - `[[migrations]] new_sqlite_classes = ["Sandbox"] tag = "v1"` — Cloudflare requires `new_sqlite_classes` for Container DOs.
 
-The included `Dockerfile` is a placeholder; the real runtime image is supplied by the SDK in CC-SBX-03.
+The included `Dockerfile` is a placeholder (alpine + git + bash); the real
+runtime image is supplied by the SDK in CC-SBX-03. The container is
+configured with `max_instances = 5` and `instance_type = "standard-2"`.
+Cold-start latency stacks per `exec` call; batch flows into a single shell
+invocation (`bash -lc 'a && b && c'`) where possible.
 
 ## Develop
 
@@ -95,3 +99,9 @@ apps/sandbox-runner/
 ├── package.json
 └── tsconfig.json
 ```
+
+## Architecture context
+
+- ADR: `docs/adr/0001-agent-sandbox.md`
+- Secrets runbook: `docs/runbooks/secrets.md`
+- Linear: AGE-49 (CC-SBX-02). GitHub: #68.
