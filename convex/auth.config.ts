@@ -1,3 +1,5 @@
+import { getAuthBaseURL } from "./authEnv";
+
 /**
  * Convex auth providers configured for the better-auth component. The
  * `betterAuth` plugin in `convex/auth.ts` wires the JWKS that Convex uses
@@ -6,7 +8,7 @@
 const config = {
   providers: [
     {
-      domain: process.env.SITE_URL ?? "http://localhost:3000",
+      domain: getAuthBaseURL(),
       applicationID: "convex",
     },
   ],

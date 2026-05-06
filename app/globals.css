@@ -56,4 +56,8 @@ button { cursor: pointer; }
 .repo-scan-count b { color: var(--text-pixel); font-size: 12px; }
 .list.compact { margin-top: 0; }
 .notice.mini { padding: 7px 9px; font-size: 11px; }
+.auth-strip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 18px; border-bottom: 1px solid var(--line-2); background: var(--bg-panel); }
+.auth-field { display: grid; gap: 6px; margin: 0 0 12px; }
+.auth-input, .auth-select { border: 1px solid var(--line-2); background: var(--bg-inset); color: var(--text-pixel); padding: 8px 10px; }
+.auth-input.compact { min-width: 220px; }
 @media (max-width: 1100px) { .app-grid { grid-template-columns: 1fr; } .nav-rail { border-right: 0; border-bottom: 1px solid var(--line-2); display: flex; overflow-x: auto; gap: 8px; } .nav-btn { width: auto; white-space: nowrap; } .board-layout, .detail-grid { grid-template-columns: 1fr; } .status-strip { display: none; } }

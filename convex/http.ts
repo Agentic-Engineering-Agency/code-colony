@@ -14,6 +14,12 @@ const http = httpRouter();
 
 authComponent.registerRoutes(http, createAuth);
 
+http.route({
+  path: "/api/auth/ok",
+  method: "GET",
+  handler: httpAction(async () => Response.json({ status: "ok" })),
+});
+
 // Agent Ready — serves llms.txt, agents.md, sitemap.xml, etc.
 // TODO(AGE-63): run `npx agent-ready setup` to scaffold config and go-live.
 registerRoutes(http, components.agentReady);

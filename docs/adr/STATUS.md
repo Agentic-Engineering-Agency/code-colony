@@ -14,7 +14,7 @@
 | AGE-50 | 0004 | Ship landing-page sign-up calling `waitlist.join` from browser | Open | — | 2026-05-04 |
 | AGE-55 | 0004 | Replace simulated triage agent with real Mastra `backlogTriageAgent` | In Progress | `feature/age-55-mastra-runcommand` | 2026-05-04 |
 | AGE-58 / AGE-59 | 0004 | Provision R2 bucket + secrets via Alchemy and wire `R2_*` env vars | Partially Done | component mounted; env vars unset | 2026-05-04 |
-| Better Auth | 0004 | Ship React provider + sign-in form on `apps/landing` and proxy handler | Open | — | 2026-05-04 |
+| AGE-78–AGE-85 | 0004 | Ship Better Auth React provider, organization plugin, protected app shell, and direct Convex `/api/auth/*` boundary | In Progress | `feature/age-78-auth-foundation` | 2026-05-06 |
 | AGE-44b | 0005 | TanStack Start client cutover: replace Next.js fetch with `useServerFn`/`useQuery` | Open | — | 2026-05-04 |
 | AGE-44c | 0005 | Drop Next.js entirely and switch default `npm run dev` / `build` to Vite | Open | — | 2026-05-04 |
 | AGE-72 | 0005 | Deploy TanStack Start app Worker to Cloudflare | Done | `feat/age-72-deploy-app-worker` → #89 | 2026-05-04 |
