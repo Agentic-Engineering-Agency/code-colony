@@ -50,7 +50,11 @@ export async function appStack(
     args.sandbox.hostname ??
     `https://${args.sandbox.workerName}.${CLOUDFLARE_ACCOUNT_ID}.workers.dev`;
 
-  const staticAssets = await Assets(`${workerName}-assets`, {
+  // `Assets()` is a plain factory in alchemy ≥0.69 (no Resource ID), so pass
+  // the props object directly. The Worker name does not appear in the asset
+  // record itself; preview vs prod isolation comes from the Worker's own
+  // `name` and the per-stage Alchemy state store.
+  const staticAssets = await Assets({
     path: BUILT_CLIENT_ASSETS_DIR,
   });
 
