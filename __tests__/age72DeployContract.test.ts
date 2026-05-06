@@ -108,6 +108,10 @@ describe("AGE-72 deploy contract", () => {
       .map((m) => m[1])
       .sort();
     const expectedKeys = [
+      // ASSETS = Cloudflare Static Assets binding for the TanStack Start
+      // client bundle under `dist/client`. Required for AGE-74 (the SSR HTML
+      // references `/assets/*.{css,js}` paths that 404 without this binding).
+      "ASSETS",
       "CONVEX_URL",
       "OPENROUTER_API_KEY",
       "OPENROUTER_MODEL_ID",
@@ -117,7 +121,7 @@ describe("AGE-72 deploy contract", () => {
     ];
     expect(
       keys,
-      `alchemy/app.ts bindings keys must remain exactly ${expectedKeys.join(", ")} (spec §Bindings); got ${keys.join(", ")}`,
+      `alchemy/app.ts bindings keys must remain exactly ${expectedKeys.join(", ")} (spec §Bindings + AGE-74 ASSETS binding); got ${keys.join(", ")}`,
     ).toEqual(expectedKeys);
   });
 

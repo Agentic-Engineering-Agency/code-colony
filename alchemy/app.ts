@@ -8,7 +8,7 @@
  * (https://openrouter.ai/api/v1) for LLM inference.
  */
 import alchemy from "alchemy";
-import { Worker } from "alchemy/cloudflare";
+import { Assets, Worker } from "alchemy/cloudflare";
 import type Alchemy from "alchemy";
 
 export interface AppStackArgs {
@@ -28,6 +28,11 @@ export interface AppStackOutput {
 // docs/specs/AGE-72-deploy-app-worker.md §S6 for why these two surfaces stay
 // separate sources of truth.
 const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
+// Companion client bundle from the same vite build. Uploaded as a Cloudflare
+// Static Assets binding so requests for `/assets/*.{js,css}` hit the asset
+// store before the Worker runs and the SSR HTML's hydration scripts resolve
+// (AGE-74).
+const BUILT_CLIENT_ASSETS_DIR = "./dist/client";
 const WRANGLER_COMPATIBILITY_DATE = "2026-04-29";
 const WRANGLER_COMPATIBILITY_FLAGS = ["nodejs_compat"] as const;
 const CLOUDFLARE_ACCOUNT_ID = "48f381bf59212dbd98d2b424ba4b9a04";
@@ -45,12 +50,17 @@ export async function appStack(
     args.sandbox.hostname ??
     `https://${args.sandbox.workerName}.${CLOUDFLARE_ACCOUNT_ID}.workers.dev`;
 
+  const staticAssets = await Assets(`${workerName}-assets`, {
+    path: BUILT_CLIENT_ASSETS_DIR,
+  });
+
   const worker = await Worker(workerName, {
     name: workerName,
     entrypoint: BUILT_WORKER_ENTRYPOINT,
     compatibilityDate: WRANGLER_COMPATIBILITY_DATE,
     compatibilityFlags: WRANGLER_COMPATIBILITY_FLAGS,
     bindings: {
+      ASSETS: staticAssets,
       CONVEX_URL: isProd
         ? "https://pastel-cricket-679.convex.cloud"
         : "https://deafening-puma-904.convex.cloud",
