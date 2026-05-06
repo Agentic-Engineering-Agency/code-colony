@@ -4,9 +4,6 @@
 ## Document Status
 
 **Status:** Living Document (last updated 2026-05-04)
-
-
-**Status:** Living Document (last updated 2026-05-04)
 **Primary audience:** Agentic Engineering founding/product/engineering team
 **Primary use:** Align product direction, define MVP scope, and guide implementation milestones
 **Current priority:** Post-MVP architecture expansion (Convex Components, TanStack Start, Alchemy IaC, sandbox runner).
@@ -15,7 +12,7 @@
 
 | Spec item | Status | Evidence |
 | --- | --- | --- |
-| Convex schema + seed | Built | `convex/schema.ts`, `convex/seed.ts` — 21 components mounted |
+| Convex schema + seed | Built | `convex/schema.ts`, `convex/seed.ts` — 20 components mounted |
 | Repo scan table + seed data | Built | `repoScans` table in schema; live pipeline stubbed |
 | Multiplayer spec approval flow | Partially built | Local state only; Convex-backed votes pending |
 | Basic marketplace/loadout registry | Built (UI) | Browseable in `CodeColonyApp`; real installs mocked |
@@ -606,7 +603,7 @@ Job failure must produce actionable failure artifacts and, when appropriate, inc
 1. ~~Company onboarding wizard.~~ — Not started (post-MVP).
 2. Project world creation via repo scan + AI interview + manual edits. — Partially built: `repoScans` table + seed data exist; live scan pipeline stubbed.
 3. ~~PixiJS hybrid graph/isometric world map.~~ — Deferred; React/CSS map is the accepted MVP surface.
-4. Convex-backed project world state. — Built: full schema + 21 components mounted; frontend migration pending AGE-44b.
+4. Convex-backed project world state. — Built: full schema + 20 components mounted; frontend migration pending AGE-44b.
 5. Multiplayer spec approval flow. — Partially built: local state works; Convex-backed votes pending.
 6. ~~Sisyphus narrator feed.~~ — Not started.
 7. ~~Sisyphus advisor panel.~~ — Not started.
