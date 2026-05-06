@@ -22,6 +22,8 @@ jobs:
       SANDBOX_HMAC_KEY: ${{ secrets.SANDBOX_HMAC_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      AUTH_EMAIL_FROM: ${{ secrets.AUTH_EMAIL_FROM }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -71,6 +73,12 @@ jobs:
             npx convex env set BETTER_AUTH_SECRET "$BETTER_AUTH_SECRET"
           else
             echo "::warning::BETTER_AUTH_SECRET not set; better-auth will fail at runtime."
+          fi
+          if [ -n "${RESEND_API_KEY:-}" ] && [ -n "${AUTH_EMAIL_FROM:-}" ]; then
+            npx convex env set RESEND_API_KEY "$RESEND_API_KEY"
+            npx convex env set AUTH_EMAIL_FROM "$AUTH_EMAIL_FROM"
+          else
+            echo "::warning::RESEND_API_KEY or AUTH_EMAIL_FROM not set; production auth email flows will fail at runtime."
           fi
 
       - if: steps.convex-secret.outputs.ready == 'true'

@@ -26,15 +26,31 @@ export const { generateUploadUrl, syncMetadata } = r2.clientApi<DataModel>({
     await requireActiveOrganization(ctx);
   },
   onUpload: async (ctx, _bucket, key) => {
-    await ctx.db.insert("r2Assets", { key, uploadedAt: Date.now() });
+    const { organizationId } = await requireActiveOrganization(ctx);
+    await ctx.db.insert("r2Assets", { key, organizationId, uploadedAt: Date.now() });
   },
 });
+
+function isPublicAssetKey(key: string) {
+  return key.startsWith("og-image/") || key.startsWith("demo-video/");
+}
 
 /** Resolve the public, signed URL for an R2 object stored by the component. */
 export const getAssetUrl = query({
   args: { key: v.string() },
   returns: v.string(),
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    if (!isPublicAssetKey(args.key)) {
+      const { organizationId } = await requireActiveOrganization(ctx);
+      const asset = await ctx.db
+        .query("r2Assets")
+        .withIndex("by_key", (q) => q.eq("key", args.key))
+        .first();
+      if (!asset || asset.organizationId !== organizationId) {
+        throw new Error("R2 asset not found for active organization");
+      }
+    }
+
     return await r2.getUrl(args.key);
   },
 });
@@ -65,8 +81,10 @@ export const registerArtifactFile = mutation({
   args: { runSeedId: v.string(), filename: v.string(), key: v.string() },
   returns: v.id("r2Assets"),
   handler: async (ctx, args) => {
+    const { organizationId } = await requireActiveOrganization(ctx);
     return await ctx.db.insert("r2Assets", {
       key: args.key,
+      organizationId,
       uploadedAt: Date.now(),
       runSeedId: args.runSeedId,
       filename: args.filename,

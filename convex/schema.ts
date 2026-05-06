@@ -430,8 +430,9 @@ export default defineSchema({
   /** Index of objects stored in Cloudflare R2 via @convex-dev/r2. */
   r2Assets: defineTable({
     key: v.string(),
+    organizationId: v.optional(v.string()),
     uploadedAt: v.number(),
     runSeedId: v.optional(v.string()),
     filename: v.optional(v.string()),
-  }).index("by_key", ["key"]).index("by_run", ["runSeedId"]),
+  }).index("by_key", ["key"]).index("by_org", ["organizationId"]).index("by_run", ["runSeedId"]),
 });
