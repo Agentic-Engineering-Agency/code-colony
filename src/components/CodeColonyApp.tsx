@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
@@ -22,7 +21,13 @@ export function CodeColonyApp() {
   return (
     <div className="colony-shell">
       <header className="topbar">
-        <Image className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} priority /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
+        {/* Plain <img> intentional: under TanStack Start the SSR HTML used to emit
+            a /_next/image preload tag (next/image side-effect) that 404s post-AGE-44.
+            The same component renders under `next dev` (logo from public/assets) and
+            the deployed Worker (logo from dist/client served by the ASSETS binding
+            wired in alchemy/app.ts) (AGE-76). */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
         <HealthStrip fallback={stats} />
       </header>
       <div className="app-grid">

@@ -4,5 +4,14 @@
   "main": "@tanstack/react-start/server-entry",
   "compatibility_date": "2026-04-29",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // `wrangler dev` parity with `alchemy/app.ts`: serve the built TanStack
+  // Start client bundle as Static Assets so /assets/*.{js,css,png} requests
+  // resolve before the SSR Worker runs (AGE-74). NOTE: requires
+  // `npm run build:tanstack` to have populated `./dist/client` first;
+  // a fresh checkout will 404 on /assets/* under `wrangler dev` until then.
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS"
+  }
 }
