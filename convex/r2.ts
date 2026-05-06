@@ -3,6 +3,7 @@ import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireActiveOrganization } from "./auth";
 
 /**
  * Cloudflare R2 binding. Configure with `npx convex env set`:
@@ -21,8 +22,8 @@ export const r2 = new R2(components.r2);
  * records its existence.
  */
 export const { generateUploadUrl, syncMetadata } = r2.clientApi<DataModel>({
-  checkUpload: async (_ctx, _bucket) => {
-    // TODO(AGE-62): require authenticated identity once better-auth is wired.
+  checkUpload: async (ctx, _bucket) => {
+    await requireActiveOrganization(ctx);
   },
   onUpload: async (ctx, _bucket, key) => {
     await ctx.db.insert("r2Assets", { key, uploadedAt: Date.now() });
