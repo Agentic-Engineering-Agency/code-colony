@@ -16,6 +16,12 @@ export type AuthRuntimeConfig = {
   hasExplicitSecret: boolean;
 };
 
+export type AuthEmailConfig = {
+  from: string;
+  replyTo?: string;
+  hasProvider: boolean;
+};
+
 function env(name: string): string | undefined {
   return process.env[name]?.trim() || undefined;
 }
@@ -65,6 +71,27 @@ export function validateBetterAuthSecret(): string | undefined {
   }
 
   return secret;
+}
+
+export function getAuthEmailConfig(): AuthEmailConfig {
+  const from = env("AUTH_EMAIL_FROM") ?? env("RESEND_FROM_EMAIL");
+  const replyTo = env("AUTH_EMAIL_REPLY_TO") ?? env("SUPPORT_EMAIL");
+  const hasProvider = Boolean(env("RESEND_API_KEY"));
+
+  if (isProduction()) {
+    if (!hasProvider) {
+      throw new Error("Production auth email requires RESEND_API_KEY");
+    }
+    if (!from) {
+      throw new Error("Production auth email requires AUTH_EMAIL_FROM or RESEND_FROM_EMAIL");
+    }
+  }
+
+  return {
+    from: from ?? "Code Colony <onboarding@resend.dev>",
+    ...(replyTo ? { replyTo } : {}),
+    hasProvider,
+  };
 }
 
 export function getAuthRuntimeConfig(): AuthRuntimeConfig {

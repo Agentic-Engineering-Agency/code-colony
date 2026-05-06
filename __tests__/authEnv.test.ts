@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getAuthRuntimeConfig, validateBetterAuthSecret } from "../convex/authEnv";
+import { getAuthEmailConfig, getAuthRuntimeConfig, validateBetterAuthSecret } from "../convex/authEnv";
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -49,5 +49,33 @@ describe("auth runtime environment", () => {
     process.env.BETTER_AUTH_SECRET = "short";
 
     expect(() => validateBetterAuthSecret()).toThrow(/Production auth requires BETTER_AUTH_SECRET/);
+  });
+
+  it("allows development auth without an email provider", () => {
+    delete process.env.RESEND_API_KEY;
+    delete process.env.AUTH_EMAIL_FROM;
+    (process.env as Record<string, string | undefined>).NODE_ENV = "development";
+
+    expect(getAuthEmailConfig()).toMatchObject({
+      from: "Code Colony <onboarding@resend.dev>",
+      hasProvider: false,
+    });
+  });
+
+  it("fails loudly when production lacks email provider configuration", () => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+    delete process.env.RESEND_API_KEY;
+    process.env.AUTH_EMAIL_FROM = "Code Colony <auth@codecolony.online>";
+
+    expect(() => getAuthEmailConfig()).toThrow(/RESEND_API_KEY/);
+  });
+
+  it("fails loudly when production lacks an auth email sender", () => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+    process.env.RESEND_API_KEY = "re_test_key";
+    delete process.env.AUTH_EMAIL_FROM;
+    delete process.env.RESEND_FROM_EMAIL;
+
+    expect(() => getAuthEmailConfig()).toThrow(/AUTH_EMAIL_FROM/);
   });
 });

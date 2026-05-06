@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { authClient } from "./client";
 
 type AuthMode = "sign-in" | "sign-up" | "reset";
@@ -42,17 +42,32 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const acceptedInvitationId = useRef<string | null>(null);
 
   const userName = session.data?.user?.name ?? session.data?.user?.email ?? "teammate";
   const organizationList = organizations.data ?? [];
   const activeOrg = activeOrganization.data;
   const loadFailure = hookErrorMessage(session.error, "Could not load session")
-    ?? hookErrorMessage(activeOrganization.error, "Could not load active workspace")
-    ?? hookErrorMessage(organizations.error, "Could not load workspace list");
+    ?? (session.data ? hookErrorMessage(organizations.error, "Could not load workspace list") : null);
   const isOwnerOrAdmin = useMemo(() => {
     const role = activeOrg?.members?.find((member) => member.userId === session.data?.user?.id)?.role;
     return role === "owner" || role === "admin";
   }, [activeOrg, session.data?.user?.id]);
+  const invitationId = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("id");
+
+  useEffect(() => {
+    if (!session.data || !invitationId || acceptedInvitationId.current === invitationId) return;
+    acceptedInvitationId.current = invitationId;
+    void runAuthAction("Invitation acceptance", async () => {
+      const { error } = await authClient.organization.acceptInvitation({ invitationId });
+      if (error) {
+        setFailure(errorMessage(error));
+        return;
+      }
+      setNotice("Invitation accepted. Select the workspace to continue.");
+      window.history.replaceState({}, "", window.location.pathname);
+    });
+  }, [invitationId, session.data]);
 
   async function runAuthAction(action: string, work: () => Promise<void>) {
     setPending(true);
@@ -167,7 +182,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!session.data) {
     return (
-      <AuthPanel title="Code Colony sign-in" subtitle="Authentication is required before tenant data is shown.">
+      <AuthPanel title="Code Colony sign-in" subtitle={invitationId ? "Sign in with the invited email address to accept this workspace invitation." : "Authentication is required before tenant data is shown."}>
         <div className="action-row" style={{ marginBottom: 12 }}>
           <button className={`btn ${mode === "sign-in" ? "primary" : ""}`} onClick={() => setMode("sign-in")}>Sign in</button>
           <button className={`btn ${mode === "sign-up" ? "primary" : ""}`} onClick={() => setMode("sign-up")}>Sign up</button>
