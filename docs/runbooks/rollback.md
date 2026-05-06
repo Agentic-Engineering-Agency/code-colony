@@ -65,3 +65,19 @@ If schema changes are involved, confirm the previous functions are compatible wi
 1. Open or update the incident issue with the rolled-back deployment identifiers.
 2. Re-run `npm run lint`, `npm run typecheck`, and `npm test` on the revert/fix branch.
 3. Open a forward-fix PR and let CI pass before re-enabling the production deploy path.
+
+## Alchemy state implications
+
+Rolling back a Worker via Wrangler (`npx wrangler rollback`) reverts the runtime code but **does not** revert Alchemy state. If the source code on `main` still references the broken version, a subsequent `npm run iac:deploy` (for example from `cd-prod.yml`) may re-promote the old broken Worker because Alchemy's desired state still matches the source.
+
+Remediation:
+
+1. After a Wrangler rollback, open a revert PR on `main` so the source matches the live runtime.
+2. Merge the revert PR before the next scheduled or triggered deploy.
+3. Only then open the forward-fix PR.
+
+## Related runbooks
+
+- CI: `docs/runbooks/ci.md`
+- Secrets: `docs/runbooks/secrets.md`
+- IaC architecture: `docs/adr/0002-iac-alchemy.md`

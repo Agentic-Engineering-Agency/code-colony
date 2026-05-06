@@ -131,3 +131,12 @@ durable triage workflow.
   `R2_*` env vars through `npx convex env set`.
 - Better Auth: ship the React provider + sign-in form on `apps/landing` and
   the proxy handler in `apps/code-colony/app/api/auth/[...all]/route.ts`.
+
+## Status update (2026-05-04)
+
+- AGE-50 (landing waitlist sign-up) — Open. Waitlist table exists but browser-side wiring not landed.
+- AGE-55 (real Mastra triage) — In Progress. Branch `feature/age-55-mastra-runcommand` exists.
+- AGE-58 / AGE-59 (R2 provisioning) — Partially Done. `@convex-dev/r2` is mounted and `r2Assets` table exists; `R2_*` env vars are still unset pending Alchemy state wiring.
+- Better Auth (React provider + sign-in form) — Open.
+
+See `docs/adr/STATUS.md` for the full follow-up registry.

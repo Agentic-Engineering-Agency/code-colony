@@ -24,3 +24,18 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 3. For production, merge only after preview succeeds; the prod workflow picks up the new secret on the next `main` push.
 4. Revoke the old provider credential after the replacement workflow succeeds.
 5. For `SANDBOX_HMAC_KEY`, rotate both the app Worker and sandbox-runner Worker in the same deployment so requests are signed and verified with the same key.
+
+## Local development secrets
+
+| File | Surface | Required variables |
+| --- | --- | --- |
+| `.env.local` (repo root) | Next.js + Convex dev | `CONVEX_DEPLOYMENT` (deployment slug, e.g. `code-colony-prod`) |
+| `.dev.vars` (`apps/sandbox-runner/`) | sandbox-runner local dev | `SANDBOX_HMAC_KEY` |
+
+Both files are gitignored. `SANDBOX_HMAC_KEY` can also be set via `wrangler secret put SANDBOX_HMAC_KEY` for remote deploys; `.dev.vars` is the local-only shortcut.
+
+## Related runbooks
+
+- CI: `docs/runbooks/ci.md`
+- Rollback: `docs/runbooks/rollback.md`
+- IaC architecture: `docs/adr/0002-iac-alchemy.md`

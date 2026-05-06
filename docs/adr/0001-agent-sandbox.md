@@ -104,3 +104,11 @@ export default {
 - Persistent storage tutorial: https://developers.cloudflare.com/sandbox/tutorials/persistent-storage/
 - Git workflows guide: https://developers.cloudflare.com/sandbox/guides/git-workflows/
 - SDK repo: https://github.com/cloudflare/sandbox-sdk
+
+## Status update (2026-05-04)
+
+- AGE-49 (scaffold `apps/sandbox-runner/`) — Done. The Worker is deployed with HMAC auth and a Container-backed Durable Object.
+- AGE-55 (wire Mastra `runCommand` tool) — In Progress. Branch `feature/age-55-mastra-runcommand` exists.
+- AGE-46 (`wrangler.toml` shape sharing) — Done; superseded by AGE-72, which aligned both app and sandbox runner deploy shapes.
+
+See `docs/adr/STATUS.md` for the full follow-up registry.

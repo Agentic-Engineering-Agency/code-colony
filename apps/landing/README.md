@@ -1,16 +1,16 @@
 # `@code-colony/landing`
 
-Vite + React + TypeScript port of the design landing page (`landing/` at the
-repo root). The rendered tree is intentionally identical to the legacy
-Babel-in-the-browser prototype — only the module system has changed.
+Vite + React + TypeScript marketing page. The rendered tree was originally
+ported from a legacy Babel-in-the-browser prototype; only the module system
+has changed.
 
 ## Source of truth
 
-The visual design and copy live in `landing/` at the repo root. That folder
-is still the design team's editing surface and **must not** be deleted while
-this Vite port is in review.
+The visual design and copy live in this directory (`apps/landing/`). The
+legacy `landing/` folder at the repo root has been removed. This Vite port
+is the current surface.
 
-The components here mirror that source one-to-one:
+The components mirror the legacy source one-to-one:
 
 | Legacy file              | Port                       |
 | ------------------------ | -------------------------- |
@@ -42,13 +42,8 @@ npm run typecheck   # tsc --noEmit
 
 ## Deploy
 
-The production deploy plan lives in `landing/DEPLOY-PROMPT.md`. For
-Cloudflare Pages once the runtime backend is wired:
-
-```bash
-# Forward reference — actual deploy lands in a follow-up ticket.
-npx wrangler pages deploy dist --project-name code-colony-landing
-```
+The production deploy is managed by Alchemy (`alchemy/landing.ts`). Deploys
+run automatically via `cd-prod.yml` on pushes to `main`.
 
 ## Known TODOs
 
@@ -58,4 +53,4 @@ npx wrangler pages deploy dist --project-name code-colony-landing
 - The waitlist submit handlers (`WaitlistModal` in `src/nav.tsx`,
   `FinalCTASection` in `src/sections.tsx`) currently flip a local "done" flag.
   Wiring them to a real Convex mutation or Worker endpoint is tracked
-  separately per `landing/DEPLOY-PROMPT.md` Step 2.
+  separately under AGE-50.
