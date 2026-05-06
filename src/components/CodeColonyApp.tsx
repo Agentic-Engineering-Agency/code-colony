@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import { applyRefreshedBacklog, applyRefreshedRepoScan, approveArtifactLearning, demoData, ingestBacklogIssue, moveJob, rejectBacklogIssue, voteOnApproval } from "@/domain/demoData";
@@ -22,7 +21,12 @@ export function CodeColonyApp() {
   return (
     <div className="colony-shell">
       <header className="topbar">
-        <Image className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} priority /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
+        {/* Plain <img> intentional: TanStack Start build emits the SSR HTML
+            and `next/image`'s preload tag pointed at the now-removed
+            `/_next/image` endpoint (AGE-76). Logo bytes are served as-is
+            from the static assets bundle wired in `alchemy/app.ts`. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo-mark" src="/assets/code-colony-logo.png" alt="Code Colony logo" width={44} height={44} /><div><div className="brand-title">CODE COLONY</div><div className="brand-sub">Where your repo becomes a living company.</div></div>
         <HealthStrip fallback={stats} />
       </header>
       <div className="app-grid">

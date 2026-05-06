@@ -81,7 +81,7 @@ npx convex run seed:seedFromDemoData   # idempotent seed
 - UI is componentized with small local functions in `CodeColonyApp.tsx`; extract only when reuse or readability demands it.
 - Styling uses CSS classes and design tokens from `docs/design/*.css`; avoid inline styles except for dynamic values such as CSS variables, positions, widths, or colors derived from data.
 - Preserve the dense pixel/tabletop visual language: panels, cards, badges, meters, queues, map nodes, standees, and token colors.
-- Use `next/image` for image assets where appropriate; the logo lives at `/assets/code-colony-logo.png`.
+- Use plain `<img>` tags for image assets so the same component renders correctly under both Next (`next dev`) and the TanStack Start build (`build:tanstack`). The TanStack Start runtime has no `/_next/image` endpoint, and `next/image` would emit a preload tag pointing at it (AGE-76). The logo lives at `/assets/code-colony-logo.png` and is served by the `ASSETS` binding wired in `alchemy/app.ts` (AGE-74).
 - Use clear labels for mock/simulated runtime surfaces. Do not imply real repository mutation unless real runtime integration exists.
 - Trust internal typed data, but validate future external inputs at boundaries when replacing mocks with real providers.
 
