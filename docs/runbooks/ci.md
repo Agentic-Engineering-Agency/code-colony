@@ -24,7 +24,7 @@ job because the commands diverge per workspace.
 
 | Leg | Job id | Workspace | Verifies | Skip-with-success guard |
 | --- | --- | --- | --- | --- |
-| root | `root` | repo root (Next.js) | `npm ci` → lint → typecheck → vitest → `next build` | always runs (root `package.json` is required) |
+| root | `root` | repo root (Next.js + TanStack + IaC config) | `npm ci` → lint → typecheck → Convex typecheck → vitest → `next build` → TanStack build → Alchemy TS validation | always runs (root `package.json` is required) |
 | landing | `landing` | `apps/landing/` (Vite) | `npm ci` → typecheck → `vite build` | step probe: skipped when `apps/landing/package.json` is absent |
 | sandbox | `sandbox` | `apps/sandbox-runner/` (Cloudflare Worker) | `npm ci` → vitest → `wrangler deploy --dry-run` | step probe: skipped when `apps/sandbox-runner/package.json` is absent |
 | convex | `convex` | `convex/` (root install) | full Convex dev sync (`convex dev --once`) + `tsc --noEmit -p convex/tsconfig.json` | step probe: skipped when `CONVEX_DEPLOY_KEY` secret is absent (e.g. fork PRs) |
@@ -37,9 +37,13 @@ automatically — no workflow edit needed.
 
 ### root
 
-Mirrors the historical single-job behavior: lint, typecheck, vitest, and
-`next build`. This leg owns the Next.js app, the shared `src/server/*RouteCore`
-modules, the `src/domain/*` types and seed data, and the `__tests__/` suite.
+Mirrors the historical single-job behavior, then adds `npm run convex:typecheck`
+for offline Convex TypeScript coverage, `npm run tanstack:build` for the
+coexisting TanStack Start surface, and `npm run iac:validate` for offline
+Alchemy TypeScript validation. This leg owns the Next.js app, the shared
+`src/server/*RouteCore` modules, the `src/domain/*` types and seed data,
+`convex/*.ts`, `app/routes/`, `vite.config.mts`, `alchemy/*.ts`, and the
+`__tests__/` suite.
 
 ### landing
 
@@ -72,9 +76,10 @@ the `CONVEX_DEPLOY_KEY` secret.
 - **Secret absent** (fork PRs, or repos that have not configured the secret):
   the leg's probe step writes `ready=false`, every subsequent step is gated by
   `if: steps.probe.outputs.ready == 'true'` and is skipped, and the job ends
-  green with a `::notice::` line explaining the skip. Convex code is **not**
-  validated on these PRs — the post-merge `push` run on `main` (where the
-  secret is always available) is the backstop.
+  green with a `::notice::` line explaining the skip. The root leg still runs
+  `npm run convex:typecheck` on these PRs; only deployment-backed codegen/schema
+  sync waits for the post-merge `push` run on `main` where the secret is
+  available.
 
 Why the secret gate is the right primitive here: the Convex CLI's `codegen`
 subcommand still calls into the deployment selection layer, which exits with
@@ -124,7 +129,8 @@ Deployment is **not** part of `ci.yml`. Deploys live in `cd-*.yml` workflows
 | **convex leg skipped with "CONVEX_DEPLOY_KEY not configured"** | `CONVEX_DEPLOY_KEY` secret is absent (fork PR or missing configuration). | Expected on fork PRs — the leg skips with success. On `push` to `main`, a missing secret causes a real failure; verify the secret is set in repo settings. |
 | **sandbox leg fails on Docker probe** | Wrangler 4.87+ streams the Dockerfile to docker stdin even on `--dry-run`; CI has no Docker daemon. | The fake-docker shim (`WRANGLER_DOCKER_BIN: /tmp/fake-docker.sh`) handles this. If the shim is missing, check the "Install fake docker shim" step in `ci.yml`. |
 | **landing leg skipped** | `apps/landing/package.json` is absent on the branch. | Expected when the landing app does not exist on a feature branch. Once merged to `main`, the leg activates automatically. |
-| **Missing TanStack Start build leg** | `ci.yml` intentionally does not build the TanStack Start surface on PR. | This is tracked as CC-CI-03. Regressions are caught at `cd-prod` time. Run `npm run build:tanstack` locally before opening PRs that touch `app/routes/` or `vite.config.mts`. |
+| **TanStack build fails in root leg** | The coexisting Start route tree, Vite/Cloudflare plugin config, or shared app component no longer builds. | Run `npm run tanstack:build` locally and check `app/routes/`, `vite.config.mts`, `wrangler.jsonc`, and assets under `dist/client`. |
+| **IaC validation fails** | Alchemy TypeScript config no longer compiles offline. | Run `npm run iac:validate`; this does not contact Cloudflare and is safe for PR CI. Live diffs/deploys remain in CD workflows or explicit local commands. |
 
 ## Related runbooks
 

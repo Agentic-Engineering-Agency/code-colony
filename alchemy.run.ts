@@ -18,9 +18,9 @@
  *     `ALCHEMY_PASSWORD` and `ALCHEMY_STATE_TOKEN` must be set.
  *
  * Auth:
- *   `CLOUDFLARE_API_TOKEN` (account: Agentic Engineering,
- *   id: 48f381bf59212dbd98d2b424ba4b9a04). The user's wrangler OAuth
- *   already covers the local dev path; CI uses a scoped service token.
+ *   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The user's wrangler
+ *   OAuth already covers the local dev path; CI uses scoped service-token
+ *   credentials.
  */
 import alchemy from "alchemy";
 import { CloudflareStateStore } from "alchemy/state";

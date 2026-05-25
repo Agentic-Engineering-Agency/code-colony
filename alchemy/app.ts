@@ -34,8 +34,7 @@ const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
 // (AGE-74).
 const BUILT_CLIENT_ASSETS_DIR = "./dist/client";
 const WRANGLER_COMPATIBILITY_DATE = "2026-04-29";
-const WRANGLER_COMPATIBILITY_FLAGS = ["nodejs_compat"] as const;
-const CLOUDFLARE_ACCOUNT_ID = "48f381bf59212dbd98d2b424ba4b9a04";
+const WRANGLER_COMPATIBILITY_FLAGS = ["nodejs_compat"];
 const OPENROUTER_URL = "https://openrouter.ai/api/v1";
 const OPENROUTER_MODEL_ID = "qwen/qwen3-coder:free";
 
@@ -48,7 +47,7 @@ export async function appStack(
   const workerName = `${namePrefix}code-colony-app`;
   const sandboxRunnerUrl =
     args.sandbox.hostname ??
-    `https://${args.sandbox.workerName}.${CLOUDFLARE_ACCOUNT_ID}.workers.dev`;
+    workersDevUrl(args.sandbox.workerName);
 
   // `Assets()` is a plain factory in alchemy ≥0.69 (no Resource ID), so pass
   // the props object directly. The Worker name does not appear in the asset
@@ -77,4 +76,14 @@ export async function appStack(
   });
 
   return { hostname: worker.url, workerName };
+}
+
+function workersDevUrl(workerName: string): string {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  if (!accountId) {
+    throw new Error(
+      "CLOUDFLARE_ACCOUNT_ID is required when Alchemy cannot read the sandbox Worker hostname",
+    );
+  }
+  return `https://${workerName}.${accountId}.workers.dev`;
 }

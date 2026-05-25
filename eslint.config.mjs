@@ -4,7 +4,7 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = [
   ...nextVitals,
   ...nextTs,
-  { ignores: [".next/**", "node_modules/**", "docs/design/tweaks-panel.jsx", "convex/**", "apps/**"] },
+  { ignores: [".next/**", "node_modules/**", "dist/**", ".wrangler/**", "docs/design/tweaks-panel.jsx", "convex/**", "apps/**"] },
 ];
 
 export default eslintConfig;

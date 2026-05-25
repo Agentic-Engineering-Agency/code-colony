@@ -1,0 +1,6 @@
+# Local-only Cloudflare Worker variables for `wrangler dev`.
+# Copy to .dev.vars. Do not commit the real .dev.vars file.
+
+SANDBOX_HMAC_KEY=replace-with-local-hmac-key
+CONVEX_URL=https://replace-with-your-convex-deployment.convex.cloud
+CONVEX_DEPLOY_KEY=replace-with-local-dev-deploy-key-if-needed

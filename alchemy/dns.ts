@@ -13,9 +13,9 @@
  *     points at the existing Pages hostname through `DnsRecords`.
  *
  * The `codecolony.online` zone is delegated to the Agentic Engineering
- * Cloudflare account (`48f381bf59212dbd98d2b424ba4b9a04`). Alchemy's
- * `DnsRecords` resource requires a zoneId, so we resolve the zone name
- * via the Cloudflare API at deploy time.
+ * Cloudflare account configured in the deploy environment. Alchemy's
+ * DNS resources require a zoneId, so we resolve the zone name via the
+ * Cloudflare API at deploy time instead of committing provider IDs.
  *
  * The previous AGE-56 `llm.codecolony.online` Cloudflare-Tunnel record is
  * intentionally absent: we now call OpenRouter directly from the app
@@ -67,7 +67,7 @@ export async function dnsStack(
   if (args.app.hostname) {
     await CustomDomain("app", {
       name: `app.${ZONE}`,
-      zoneName: ZONE,
+      zoneId,
       workerName: args.app.workerName,
       adopt: true,
     });
@@ -76,7 +76,7 @@ export async function dnsStack(
   if (args.sandbox.hostname) {
     await CustomDomain("sandbox", {
       name: `sandbox.${ZONE}`,
-      zoneName: ZONE,
+      zoneId,
       workerName: args.sandbox.workerName,
       adopt: true,
     });
