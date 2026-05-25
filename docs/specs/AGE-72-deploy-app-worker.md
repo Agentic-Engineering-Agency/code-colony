@@ -114,7 +114,7 @@ Build-time env never sees secrets. Deploy-time secrets are passed only to alchem
 ### Worker naming
 
 - prod: `code-colony-app` (no stage prefix; `namePrefix = ""` in `alchemy/app.ts`).
-- preview: `${stage}-code-colony-app` where `stage = "preview-${PR_NUMBER}"`. Hostname falls back to `https://${stage}-code-colony-app.48f381bf59212dbd98d2b424ba4b9a04.workers.dev`. No custom subdomain is bound for preview (dnsStack early-returns when `stage !== "prod"`, see `alchemy/dns.ts` line 45).
+- preview: `${stage}-code-colony-app` where `stage = "preview-${PR_NUMBER}"`. Hostname falls back to `https://${stage}-code-colony-app.${CLOUDFLARE_ACCOUNT_ID}.workers.dev`. No custom subdomain is bound for preview (dnsStack early-returns when `stage !== "prod"`, see `alchemy/dns.ts` line 45).
 - prod hostname binding: `CustomDomain("app", { name: "app.codecolony.online", zoneName: "codecolony.online", workerName: "code-colony-app", adopt: true })` from `alchemy/dns.ts` lines 67–74.
 
 ## Behavior
@@ -129,7 +129,7 @@ Build-time env never sees secrets. Deploy-time secrets are passed only to alchem
 
 - Given a PR is opened with `ALCHEMY_STAGE=preview-<n>` derived from the PR number and all `deploy-secrets` are configured.
 - When `CD Preview` runs the same build step under the new gate and then `npm run iac:deploy -- --stage preview-<n>`.
-- Then alchemy provisions a Worker named `preview-<n>-code-colony-app` reachable at `https://preview-<n>-code-colony-app.48f381bf59212dbd98d2b424ba4b9a04.workers.dev`, no custom domain is bound (dnsStack early-returns), and the existing `Comment preview URLs` step posts that URL on the PR unchanged.
+- Then alchemy provisions a Worker named `preview-<n>-code-colony-app` reachable at the `workers.dev` hostname for the configured `CLOUDFLARE_ACCOUNT_ID`, no custom domain is bound (dnsStack early-returns), and the existing `Comment preview URLs` step posts that URL on the PR unchanged.
 
 ### AGE-72/S3 — Build failure short-circuits the deploy
 

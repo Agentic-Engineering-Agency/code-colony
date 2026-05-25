@@ -1,6 +1,7 @@
 import type { BacklogRefreshFetchers, BacklogRefreshReport } from "../domain/backlogRefresh";
 import type { BacklogIssue, DemoData } from "../domain/types";
 import { refreshBacklogFromImporters } from "../domain/backlogRefresh";
+import { postHog, type PostHogClient } from "../observability/posthog";
 import { BACKLOG_REFRESH_SOURCES, buildBacklogFetchers, isBacklogRefreshSource, type BacklogRefreshSource } from "./backlogSources";
 
 export type BacklogRouteSuccessBody = { repo: string; source: BacklogRefreshSource; report: BacklogRefreshReport; backlog: BacklogIssue[] };
@@ -14,9 +15,10 @@ export type BacklogRouteOptions = {
   data: DemoData;
   defaultRepo: string;
   fetchersFor?: (source: BacklogRefreshSource, repo: string) => BacklogRefreshFetchers;
+  telemetry?: PostHogClient;
 };
 
-export async function runBacklogRefreshRequest({ searchParams, data, defaultRepo, fetchersFor }: BacklogRouteOptions): Promise<BacklogRouteResponse> {
+export async function runBacklogRefreshRequest({ searchParams, data, defaultRepo, fetchersFor, telemetry = postHog }: BacklogRouteOptions): Promise<BacklogRouteResponse> {
   const repo = searchParams.get("repo") ?? defaultRepo;
   const sourceParam = searchParams.get("source") ?? "all";
   if (!isBacklogRefreshSource(sourceParam)) {
@@ -24,6 +26,18 @@ export async function runBacklogRefreshRequest({ searchParams, data, defaultRepo
   }
   const fetchers = (fetchersFor ?? buildBacklogFetchers)(sourceParam, repo);
   const result = await refreshBacklogFromImporters(data, fetchers);
+  await telemetry.capture({
+    event: "workpool_event",
+    properties: {
+      workpool_name: "backlog_refresh",
+      workpool_status: "completed",
+      repo,
+      source: sourceParam,
+      github_added: result.report.githubAdded,
+      linear_added: result.report.linearAdded,
+      error_count: result.report.errors.length,
+    },
+  });
   return {
     status: 200,
     body: { repo, source: sourceParam, report: result.report, backlog: result.data.backlog },

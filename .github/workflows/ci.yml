@@ -23,8 +23,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run convex:typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run tanstack:build
+      - run: npm run iac:validate
 
   landing:
     name: landing (vite)

@@ -23,7 +23,7 @@ This first working version is a local, seeded vertical slice:
 ```bash
 npm install
 npm run dev              # Next.js app — http://localhost:3000
-npm run dev:tanstack     # TanStack Start app — http://localhost:3001
+npm run tanstack:dev     # TanStack Start app — http://localhost:3001
 npm run landing:dev      # Vite landing page — http://localhost:5173
 npx convex dev           # Convex backend dev sync
 ```
@@ -33,7 +33,7 @@ npx convex dev           # Convex backend dev sync
 Mirror the CI sequence before pushing:
 
 ```bash
-npm run lint && npm run typecheck && npm test && npm run build
+npm run lint && npm run typecheck && npm test && npm run build && npm run tanstack:build && npm run iac:validate
 ```
 
 ## Workspace structure
@@ -56,11 +56,12 @@ npm run lint && npm run typecheck && npm test && npm run build
 ## Architecture
 
 - **Next.js** (`app/`) — current primary app surface; runs locally on port 3000.
-- **TanStack Start** (`app/routes/`, `vite.config.mts`) — coexists alongside Next.js per ADR 0005; future primary app surface once the client cutover completes. Runs on port 3001 via `npm run dev:tanstack`.
+- **TanStack Start** (`app/routes/`, `vite.config.mts`) — coexists alongside Next.js per ADR 0005; future primary app surface once the client cutover completes. Runs on port 3001 via `npm run tanstack:dev`.
 - **Convex backend** (`convex/`) — full schema + 20 mounted components (ADRs 0004 and 0006); seed mutation ready; frontend queries/mutations migration pending.
 - **Alchemy IaC** (`alchemy/`, `alchemy.run.ts`) — production DNS, landing Pages, sandbox-runner Worker, and app Worker all deployed via `npm run iac:deploy`.
 - **Mastra agent layer** (`mastra/`) — configured with OpenRouter; `backlogTriageAgent` is real but the `runCommand` tool is stubbed until AGE-55 lands.
 - **Cloudflare Sandbox SDK** (`apps/sandbox-runner/`) — ADR 0001; Container-backed Durable Object with `max_instances=5`; Dockerfile is a placeholder pending SDK runtime image (CC-SBX-03).
+- **PostHog observability** (`src/observability/posthog.ts`) — canonical product, AI, payment, webhook, and automation telemetry with no-op local behavior and redaction by default.
 
 ## What is mocked
 
@@ -101,7 +102,7 @@ Authoritative PRD/design files live under:
 ## Documentation map
 
 - **Agent guidelines**: `AGENTS.md` — conventions, commands, and code patterns for this repo.
-- **Runbooks**: `docs/runbooks/ci.md`, `docs/runbooks/rollback.md`, `docs/runbooks/secrets.md`
+- **Runbooks**: `docs/runbooks/local-dev.md`, `docs/runbooks/ci.md`, `docs/runbooks/deployment.md`, `docs/runbooks/posthog.md`, `docs/runbooks/rollback.md`, `docs/runbooks/secrets.md`, `docs/runbooks/workflows-workpools.md`
 - **ADRs**: `docs/adr/0001-agent-sandbox.md` through `docs/adr/0006-convex-components-billing-orchestration.md`
 - **Product spec**: `docs/product/agent_company_sim_detailed_spec.md`
 - **MVP implementation notes**: `docs/implementation-plan.md`
@@ -115,7 +116,7 @@ This repo uses a **rebase/fast-forward workflow** with no merge commits.
 - Run the full verification sequence before pushing:
 
 ```bash
-npm run lint && npm run typecheck && npm test && npm run build
+npm run lint && npm run typecheck && npm test && npm run build && npm run tanstack:build && npm run iac:validate
 ```
 
 ## Project links

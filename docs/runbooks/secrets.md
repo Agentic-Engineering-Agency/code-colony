@@ -4,8 +4,8 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 
 | Secret | Where to generate | Required scope | Rotation cadence | Access |
 | --- | --- | --- | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens, or an account-owned service token. | Account `48f381bf59212dbd98d2b424ba4b9a04`; Workers Scripts write, Workers Routes write, Pages write, Containers write, Secrets Store write, Zone read/write for `codecolony.online`, KV/state access used by Alchemy. | 90 days, and immediately after maintainer offboarding. | Agentic Engineering Cloudflare account admins and GitHub repository admins. |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard account overview. Current value: `48f381bf59212dbd98d2b424ba4b9a04`. | Identifier only; no secret provider scope. | Only when moving accounts. | GitHub repository admins; value may also appear in workflow env. |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens, or an account-owned service token. | Workers Scripts write, Workers Routes write, Pages write, Containers write, Secrets Store write, Zone read/write for `codecolony.online`, KV/state access used by Alchemy. | 90 days, and immediately after maintainer offboarding. | Agentic Engineering Cloudflare account admins and GitHub repository admins. |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard account overview. Store the real value only in local env or GitHub Actions secrets/variables. | Identifier only; no secret provider scope. | Only when moving accounts. | GitHub repository admins; value may also appear in workflow env. |
 | `ALCHEMY_PASSWORD` | Generate with a password manager or `openssl rand -base64 48`; store only in GitHub secrets and the shared admin vault. | Encrypts Alchemy state secrets before they are stored. | 180 days, coordinated with Alchemy state migration because changing it can make existing encrypted state unreadable. | Infrastructure maintainers only. |
 | `ALCHEMY_STATE_TOKEN` | Cloudflare API token dedicated to Alchemy state storage. | Minimum Cloudflare KV/state permissions required by `ALCHEMY_STATE_STORE=cloudflare` for the Code Colony account. | 90 days, and immediately after maintainer offboarding. | Infrastructure maintainers and GitHub repository admins. |
 | `CONVEX_DEPLOY_KEY` | Convex dashboard → project settings → deploy keys for the production project. | Deploy permission for the Code Colony Convex project. | 90 days, and immediately after maintainer offboarding. | Convex project admins and GitHub repository admins. |
@@ -16,6 +16,9 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 | `STEEL_API_KEY` | Steel dashboard → API Keys (https://steel.dev). | Cloud browser sessions via `@steel-dev/convex`. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
 | `RESEND_API_KEY` | Resend dashboard → API Keys. | Email delivery via `@convex-dev/resend`. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
 | `RESEND_WEBHOOK_SECRET` | Resend dashboard → Webhooks. | Verify incoming Resend webhook signatures. | On exposure. | Infrastructure maintainers and GitHub repository admins. |
+| `POSTHOG_API_KEY` | PostHog project settings → Project API key. | Server-side product, AI, payment, webhook, and automation telemetry. | On exposure or project migration. | Product/analytics owners and GitHub repository admins. |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project settings → Project API key. | Browser analytics for Next/TanStack surfaces. Public by design but still configured through env. | On project migration. | Product/analytics owners. |
+| `VITE_PUBLIC_POSTHOG_KEY` | PostHog project settings → Project API key. | Browser analytics for the Vite landing app. Public by design but still configured through env. | On project migration. | Product/analytics owners. |
 
 ## Rotation notes
 
@@ -30,6 +33,8 @@ Code Colony deploys use GitHub Actions repository secrets. Access is limited to 
 | File | Surface | Required variables |
 | --- | --- | --- |
 | `.env.local` (repo root) | Next.js + Convex dev | `CONVEX_DEPLOYMENT` (deployment slug, e.g. `code-colony-prod`) |
+| `.env.local` (repo root) | Next.js + TanStack + local route cores | see `.env.example` for Convex, Better Auth, AI, Dodo, Resend, R2, Alchemy, PostHog, app URLs, and webhook placeholders |
+| `.env.local` (`apps/landing/`) | Vite landing dev | see `apps/landing/.env.example` |
 | `.dev.vars` (`apps/sandbox-runner/`) | sandbox-runner local dev | `SANDBOX_HMAC_KEY` |
 
 Both files are gitignored. `SANDBOX_HMAC_KEY` can also be set via `wrangler secret put SANDBOX_HMAC_KEY` for remote deploys; `.dev.vars` is the local-only shortcut.
@@ -37,5 +42,8 @@ Both files are gitignored. `SANDBOX_HMAC_KEY` can also be set via `wrangler secr
 ## Related runbooks
 
 - CI: `docs/runbooks/ci.md`
+- Local dev: `docs/runbooks/local-dev.md`
+- Deploys: `docs/runbooks/deployment.md`
+- PostHog: `docs/runbooks/posthog.md`
 - Rollback: `docs/runbooks/rollback.md`
 - IaC architecture: `docs/adr/0002-iac-alchemy.md`

@@ -1,4 +1,5 @@
 import type { BacklogIssue } from "../domain/types";
+import { postHog, type PostHogClient } from "../observability/posthog";
 
 export type TriageSuggestion = {
   suggestedRegionId: string;
@@ -65,9 +66,10 @@ export function parseTriageOutput(raw: string): TriageSuggestion | null {
 export type TriageRouteOptions = {
   payload: unknown;
   runAgent: RunAgent;
+  telemetry?: PostHogClient;
 };
 
-export async function runTriageRequest({ payload, runAgent }: TriageRouteOptions): Promise<TriageRouteResponse> {
+export async function runTriageRequest({ payload, runAgent, telemetry = postHog }: TriageRouteOptions): Promise<TriageRouteResponse> {
   if (!payload || typeof payload !== "object") {
     return { status: 400, body: { error: "expected JSON body { issue: BacklogIssue }" } };
   }
@@ -77,17 +79,71 @@ export async function runTriageRequest({ payload, runAgent }: TriageRouteOptions
   }
 
   let result: { text?: string };
+  const startedAt = Date.now();
+  await telemetry.capture({
+    event: "agent_lifecycle_event",
+    properties: {
+      agent_id: "backlog-triage",
+      lifecycle_status: "started",
+      issue_id: issue.id,
+      issue_source: issue.source,
+      suggested_region_id: issue.suggestedRegionId,
+    },
+  });
   try {
     result = await runAgent(issue);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    await telemetry.capture({
+      event: "agent_lifecycle_event",
+      properties: {
+        agent_id: "backlog-triage",
+        lifecycle_status: "failed",
+        issue_id: issue.id,
+        latency_ms: Date.now() - startedAt,
+        error_message: message,
+      },
+    });
     return { status: 502, body: { error: `agent failed: ${message}` } };
   }
 
   const raw = (result.text ?? "").trim();
   const suggestion = parseTriageOutput(raw);
   if (!suggestion) {
+    await telemetry.capture({
+      event: "ai_observation",
+      properties: {
+        agent_id: "backlog-triage",
+        issue_id: issue.id,
+        status: "non_conforming_output",
+        model_provider: "openrouter",
+        model_id: process.env.OPENROUTER_MODEL_ID ?? "qwen/qwen3-coder:free",
+        latency_ms: Date.now() - startedAt,
+        input_tokens: null,
+        output_tokens: null,
+        estimated_cost_usd: null,
+        output_length: raw.length,
+      },
+    });
     return { status: 502, body: { error: "agent returned non-conforming output", raw } };
   }
+  await telemetry.capture({
+    event: "ai_observation",
+    properties: {
+      agent_id: "backlog-triage",
+      issue_id: issue.id,
+      status: "completed",
+      model_provider: "openrouter",
+      model_id: process.env.OPENROUTER_MODEL_ID ?? "qwen/qwen3-coder:free",
+      latency_ms: Date.now() - startedAt,
+      input_tokens: null,
+      output_tokens: null,
+      estimated_cost_usd: null,
+      output_length: raw.length,
+      suggested_region_id: suggestion.suggestedRegionId,
+      suggested_agent: suggestion.suggestedAgent,
+      risk: suggestion.risk,
+    },
+  });
   return { status: 200, body: { issue, suggestion } };
 }

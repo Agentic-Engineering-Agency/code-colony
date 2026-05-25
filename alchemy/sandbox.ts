@@ -32,6 +32,7 @@ export async function sandboxStack(
   // merges, the source path is intentionally relative — Alchemy resolves
   // it from the repo root.
   const sandboxImage = await Container(`${workerName}-image`, {
+    className: "Sandbox",
     name: `${workerName}-image`,
     build: {
       context: "apps/sandbox-runner",
