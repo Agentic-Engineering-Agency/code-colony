@@ -26,3 +26,4 @@ dist
 .output
 .wrangler
 .gitnexus
+/.omp/skills
