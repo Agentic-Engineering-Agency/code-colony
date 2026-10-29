@@ -27,3 +27,5 @@ dist
 .wrangler
 .gitnexus
 /.omp/skills
+.jevmem/
+.cursor/hooks/state/
