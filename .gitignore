@@ -13,8 +13,8 @@ yarn-error.log*
 tsconfig.tsbuildinfo
 
 
-# Convex
-convex/_generated
+# Convex: convex/_generated is committed so CI can typecheck without a deployment key.
+.convex/
 
 # Alchemy IaC state (local dev)
 .alchemy/

@@ -49,7 +49,7 @@ npm run lint && npm run typecheck && npm test && npm run build && npm run tansta
 | `mastra/` | Mastra agent layer — LLM config, `backlogTriageAgent`, sandbox client tools |
 | `docs/adr/` | Architecture decision records (0001–0006) |
 | `docs/runbooks/` | Operational playbooks — CI, rollback, secrets |
-| `docs/specs/` | Implementation specifications (e.g., AGE-72 app Worker deploy) |
+| `specs/` | Implementation specifications (e.g., AGE-72 app Worker deploy) |
 | `docs/product/` | Authoritative PRD and design source material |
 | `docs/design/` | Design-system CSS and reference images |
 

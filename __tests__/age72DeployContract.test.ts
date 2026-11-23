@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
  * the spec scenario(s) it covers. The assertions read repo files from disk;
  * they are intentionally textual (regex / substring) rather than AST-based
  * because the spec defines exact tokens. See
- * `docs/specs/AGE-72-deploy-app-worker.md`.
+ * `specs/AGE-72-deploy-app-worker.md`.
  */
 
 const REPO = path.resolve(__dirname, "..");
@@ -237,9 +237,9 @@ describe("AGE-72 deploy contract", () => {
     ).toBe("@tanstack/react-start/server-entry");
   });
 
-  it("docs/specs/AGE-72-deploy-app-worker.md exists with the required H2 sections in order", async () => {
+  it("specs/AGE-72-deploy-app-worker.md exists with the required H2 sections in order", async () => {
     // spec: AGE-72 / scenario S1-S6 (regression guard on spec presence)
-    const md = await readRepo("docs/specs/AGE-72-deploy-app-worker.md");
+    const md = await readRepo("specs/AGE-72-deploy-app-worker.md");
     const headings = Array.from(md.matchAll(/^##\s+(.+?)\s*$/gm)).map(
       (m) => m[1],
     );
@@ -254,7 +254,7 @@ describe("AGE-72 deploy contract", () => {
     ];
     expect(
       headings,
-      `docs/specs/AGE-72-deploy-app-worker.md H2 sections must equal ${expected.join(" → ")}; got ${headings.join(" → ")}`,
+      `specs/AGE-72-deploy-app-worker.md H2 sections must equal ${expected.join(" → ")}; got ${headings.join(" → ")}`,
     ).toEqual(expected);
   });
 });
