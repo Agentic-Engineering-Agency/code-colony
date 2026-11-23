@@ -24,7 +24,7 @@ job because the commands diverge per workspace.
 
 | Leg | Job id | Workspace | Verifies | Skip-with-success guard |
 | --- | --- | --- | --- | --- |
-| root | `root` | repo root (Next.js + TanStack + IaC config) | `npm ci` → lint → typecheck → Convex typecheck → vitest → `next build` → TanStack build → Alchemy TS validation | always runs (root `package.json` is required) |
+| root | `root` | repo root (Next.js + TanStack + IaC config) | `npm ci` → lint → typecheck → vitest → `next build` → TanStack build → Alchemy TS validation | always runs (root `package.json` is required) |
 | landing | `landing` | `apps/landing/` (Vite) | `npm ci` → typecheck → `vite build` | step probe: skipped when `apps/landing/package.json` is absent |
 | sandbox | `sandbox` | `apps/sandbox-runner/` (Cloudflare Worker) | `npm ci` → vitest → `wrangler deploy --dry-run` | step probe: skipped when `apps/sandbox-runner/package.json` is absent |
 | convex | `convex` | `convex/` (root install) | full Convex dev sync (`convex dev --once`) + `tsc --noEmit -p convex/tsconfig.json` | step probe: skipped when `CONVEX_DEPLOY_KEY` secret is absent (e.g. fork PRs) |
@@ -37,8 +37,7 @@ automatically — no workflow edit needed.
 
 ### root
 
-Mirrors the historical single-job behavior, then adds `npm run convex:typecheck`
-for offline Convex TypeScript coverage, `npm run tanstack:build` for the
+Mirrors the historical single-job behavior, then adds `npm run tanstack:build` for the
 coexisting TanStack Start surface, and `npm run iac:validate` for offline
 Alchemy TypeScript validation. This leg owns the Next.js app, the shared
 `src/server/*RouteCore` modules, the `src/domain/*` types and seed data,
@@ -76,10 +75,10 @@ the `CONVEX_DEPLOY_KEY` secret.
 - **Secret absent** (fork PRs, or repos that have not configured the secret):
   the leg's probe step writes `ready=false`, every subsequent step is gated by
   `if: steps.probe.outputs.ready == 'true'` and is skipped, and the job ends
-  green with a `::notice::` line explaining the skip. The root leg still runs
-  `npm run convex:typecheck` on these PRs; only deployment-backed codegen/schema
-  sync waits for the post-merge `push` run on `main` where the secret is
-  available.
+  green with a `::notice::` line explaining the skip. `convex/*.ts`
+  typechecking then waits for the post-merge `push` run on `main` where the
+  secret is available. The root leg does not run `npm run convex:typecheck`:
+  `convex/_generated/` is gitignored, so that check cannot pass without codegen.
 
 Why the secret gate is the right primitive here: the Convex CLI's `codegen`
 subcommand still calls into the deployment selection layer, which exits with
