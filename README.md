@@ -102,6 +102,7 @@ Authoritative PRD/design files live under:
 ## Documentation map
 
 - **Agent guidelines**: `AGENTS.md` — conventions, commands, and code patterns for this repo.
+- **Portfolio integration**: `docs/portfolio-integration.md` — experiment status, evidence boundary, and future adapter seam.
 - **Runbooks**: `docs/runbooks/local-dev.md`, `docs/runbooks/ci.md`, `docs/runbooks/deployment.md`, `docs/runbooks/posthog.md`, `docs/runbooks/rollback.md`, `docs/runbooks/secrets.md`, `docs/runbooks/workflows-workpools.md`
 - **ADRs**: `docs/adr/0001-agent-sandbox.md` through `docs/adr/0006-convex-components-billing-orchestration.md`
 - **Product spec**: `docs/product/agent_company_sim_detailed_spec.md`
