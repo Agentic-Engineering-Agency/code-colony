@@ -25,7 +25,7 @@ export interface AppStackOutput {
 // bundle here; alchemy uploads exactly this file. `wrangler.jsonc` deliberately
 // keeps the virtual `@tanstack/react-start/server-entry` so `wrangler dev` /
 // `npm run dev:tanstack` continue to work against the unbuilt source. See
-// docs/specs/AGE-72-deploy-app-worker.md §S6 for why these two surfaces stay
+// specs/AGE-72-deploy-app-worker.md §S6 for why these two surfaces stay
 // separate sources of truth.
 const BUILT_WORKER_ENTRYPOINT = "dist/server/index.mjs";
 // Companion client bundle from the same vite build. Uploaded as a Cloudflare
