@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { verifyOrganizationMembership } from "../convex/auth";
+import { verifyOrganizationMembership } from "../convex/tenancy";
 
 
 const REPO = path.resolve(__dirname, "..");
