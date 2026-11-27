@@ -1,0 +1,21 @@
+{
+  "mcp": {
+    "servers": {
+      "cloudflare-docs": {
+        "type": "http",
+        "url": "https://docs.mcp.cloudflare.com/mcp"
+      },
+      "posthog": {
+        "type": "http",
+        "url": "https://mcp.posthog.com/mcp"
+      },
+      "jevmem": {
+        "type": "stdio",
+        "command": "jevmem",
+        "args": [
+          "mcp"
+        ]
+      }
+    }
+  }
+}
