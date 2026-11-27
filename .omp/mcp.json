@@ -8,6 +8,13 @@
     "posthog": {
       "type": "http",
       "url": "https://mcp.posthog.com/mcp"
+    },
+    "jevmem": {
+      "type": "stdio",
+      "command": "jevmem",
+      "args": [
+        "mcp"
+      ]
     }
   },
   "disabledServers": [
